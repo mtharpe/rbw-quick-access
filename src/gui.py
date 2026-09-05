@@ -1,17 +1,21 @@
 from threading import Thread
 from typing import cast
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QKeyEvent, QShowEvent
+from PyQt6.QtCore import QAbstractListModel, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListView,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
     QSizePolicy,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     QVBoxLayout,
     QWidget,
 )
@@ -118,6 +122,7 @@ class SearchBox(QLineEdit):
 class SearchResults(QListWidget):
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
+        self.setItemDelegate(SearchResultDelegate(self))
         self.__results: list[SearchResult] = []
         self.itemSelectionChanged.connect(self.selection_changed)
 
@@ -126,10 +131,8 @@ class SearchResults(QListWidget):
         self.__results = [SearchResult(x) for x in results]
         for w in self.__results:
             self.addItem(w)
-            self.setItemWidget(w, w.get_label())
 
     def selection_changed(self):
-        # print(self.selectedItems())
         for result in cast(list[SearchResults], self.selectedItems()):
             print(result.item)
 
@@ -152,6 +155,64 @@ class SearchResults(QListWidget):
         return not len(self.__results) or self.currentRow() == 0
 
 
+class SearchResultDelegate(QStyledItemDelegate):
+    VERTICAL_PADDING = 10
+
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+
+        return QSize(
+            size.width(),
+            size.height() + self.VERTICAL_PADDING * 2,
+        )
+
+    def paint(self, painter, option, index):
+        if not painter:
+            return
+
+        # REGION rebuild standard QListWidgetItem painting
+        painter.save()
+
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        opt.text = ""  # Unset the text now, so the normal render method doesn't try to render it.
+
+        widget = opt.widget
+        style = widget.style() if widget else QApplication.style()
+        if not style:
+            return
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, opt, painter, widget)
+        # ENDREGION rebuild standard QListWidgetItem painting
+
+        rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemText, opt, widget)
+        painter.setPen(opt.palette.color(opt.palette.ColorRole.HighlightedText if opt.state & QStyle.StateFlag.State_Selected else opt.palette.ColorRole.Text))
+
+        item: BitwardenEntry = index.data(Qt.ItemDataRole.UserRole)
+
+        bold_font = QFont(opt.font)
+        bold_font.setBold(True)
+
+        painter.setFont(bold_font)
+        painter.drawText(
+            rect,
+            Qt.AlignmentFlag.AlignVCenter,
+            item.name,
+        )
+
+        # Measure where the bold portion ended
+        x = rect.x() + QFontMetrics(bold_font).horizontalAdvance(item.name)
+
+        normal_font = opt.font
+        painter.setFont(normal_font)
+        painter.drawText(
+            rect.adjusted(x - rect.x(), 0, 0, 0),
+            Qt.AlignmentFlag.AlignVCenter,
+            f" — {item.user} — {item.uri}",
+        )
+
+        painter.restore()
+
+
 class SearchResult(QListWidgetItem):
     def __init__(self, item: BitwardenEntry):
         super().__init__()
@@ -162,6 +223,8 @@ class SearchResult(QListWidgetItem):
 
         self.setText(item.name)
         self.setSizeHint(self.__label.sizeHint())
+        # Store the data for use in the delegate :)
+        self.setData(Qt.ItemDataRole.UserRole, item)
 
     def get_label(self):
         return self.__label
