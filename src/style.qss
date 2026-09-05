@@ -37,15 +37,11 @@ QListWidget {
 }
 
 QListWidget::item {
-    padding: 8px;
+    padding: 4px;
     border-radius: 8px;
-    text-overflow: hidden;
-    overflow: hidden;
 }   
 
-
-
 QListWidget::item::selected {
-    color: #16161e !important;
+    /* TEXT COLOR IS HANDLED IN THE DELEGATE */
     background-color: #bb9af7;
 }

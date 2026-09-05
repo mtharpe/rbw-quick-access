@@ -1,14 +1,13 @@
 from threading import Thread
 from typing import cast
 
-from PyQt6.QtCore import QAbstractListModel, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListView,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
@@ -79,12 +78,11 @@ class MainWindow(QMainWindow):
         """
 
         request_id, results = data
-
-        if not results or request_id <= self.__last_result_id:
+        if request_id <= self.__last_result_id:
             return
 
         self.__last_result_id = request_id
-        self.results_widget.update_entries(results)
+        self.results_widget.update_entries(results or [])
 
 
 class SearchBox(QLineEdit):
@@ -123,6 +121,7 @@ class SearchResults(QListWidget):
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
         self.setItemDelegate(SearchResultDelegate(self))
+        self.horizontalScrollBar().hide()  # type: ignore -- this is always gonna be here, right?
         self.__results: list[SearchResult] = []
         self.itemSelectionChanged.connect(self.selection_changed)
 
@@ -185,7 +184,14 @@ class SearchResultDelegate(QStyledItemDelegate):
         # ENDREGION rebuild standard QListWidgetItem painting
 
         rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemText, opt, widget)
-        painter.setPen(opt.palette.color(opt.palette.ColorRole.HighlightedText if opt.state & QStyle.StateFlag.State_Selected else opt.palette.ColorRole.Text))
+        color: QColor
+        # Nasty coloring block since this is kinda... weird. Doesn't take on QSS theme like it should
+        #  And yes, the bitwise and is necessary T_T
+        if opt.state & QStyle.StateFlag.State_Selected:
+            color = QColor("#16161e")
+        else:
+            color = opt.palette.color(opt.palette.ColorRole.Text)
+        painter.setPen(color)
 
         item: BitwardenEntry = index.data(Qt.ItemDataRole.UserRole)
 
@@ -207,7 +213,7 @@ class SearchResultDelegate(QStyledItemDelegate):
         painter.drawText(
             rect.adjusted(x - rect.x(), 0, 0, 0),
             Qt.AlignmentFlag.AlignVCenter,
-            f" — {item.user} — {item.uri}",
+            f"  —  {item.user}  —  {item.uri}",
         )
 
         painter.restore()
@@ -217,17 +223,9 @@ class SearchResult(QListWidgetItem):
     def __init__(self, item: BitwardenEntry):
         super().__init__()
         self.item = item
-
-        self.__label = QLabel(f"<b>{self.item.name}</b> - {self.item.user} - {self.item.uri}")
-        self.__label.setTextFormat(Qt.TextFormat.RichText)
-
         self.setText(item.name)
-        self.setSizeHint(self.__label.sizeHint())
         # Store the data for use in the delegate :)
         self.setData(Qt.ItemDataRole.UserRole, item)
-
-    def get_label(self):
-        return self.__label
 
 
 class HotkeyGuide(QWidget):
@@ -235,9 +233,8 @@ class HotkeyGuide(QWidget):
         super().__init__()
 
         layout = QHBoxLayout()
-        # layout.
-        layout.addWidget(self.__make_guide("Ctrl + C", "Copy username"))
-        layout.addWidget(self.__make_guide("Ctrl + Shift + C", "Copy password"))
+        layout.addWidget(self.__make_guide("Ctrl+C", "Copy username"))
+        layout.addWidget(self.__make_guide("Ctrl+Shift+C", "Copy password"))
         layout.addWidget(self.__make_guide("→", "More Actions"))
         self.setLayout(layout)
 
@@ -245,7 +242,11 @@ class HotkeyGuide(QWidget):
         lbl = QLabel()
         lbl.setTextFormat(Qt.TextFormat.RichText)
         lbl.setText(f"""
-            <span>
+            <span style="
+                font-family: monospace;
+                background-color: #9aa5ce;
+                color: #16161e;
+            ">
                 {keybind}
             </span>
             &nbsp; {text}
