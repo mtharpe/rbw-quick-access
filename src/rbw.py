@@ -32,7 +32,7 @@ class BitwardenEntry:
         )
 
 
-def search(query: str, limit=6) -> list[BitwardenEntry] | None:
+def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
     """Performs the `rbw` search with the given query, limited by a number of results defined
 
     Args:
@@ -50,6 +50,6 @@ def search(query: str, limit=6) -> list[BitwardenEntry] | None:
         ).stdout.decode("utf-8")
 
         data = [BitwardenEntry.from_dict(x) for x in json.loads(output)]
-        return data[: min(limit, len(data))]
+        return data[: min(limit or 1_000_000, len(data))]
     except subprocess.CalledProcessError:
         return None
