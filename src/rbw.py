@@ -1,4 +1,9 @@
-# A wrapper around various `rbw` commands
+"""
+@author Jose Stovall | oitsjustjose
+
+A wrapper around the various rbw commands, including caching for better performance
+"""
+
 import json
 import subprocess
 from dataclasses import dataclass
@@ -16,7 +21,7 @@ class BitwardenEntry:
     @staticmethod
     def from_dict(obj: dict) -> "BitwardenEntry":
         uris = obj.get("uris", [])
-        uri = uris[0] if len(uris) else None
+        uri = uris[0] if uris else None
         return BitwardenEntry(
             id=obj.get("id", ""),
             name=obj.get("name", ""),
@@ -27,7 +32,16 @@ class BitwardenEntry:
         )
 
 
-def search(query: str) -> list[BitwardenEntry]:
+def search(query: str, limit=6) -> list[BitwardenEntry] | None:
+    """Performs the `rbw` search with the given query, limited by a number of results defined
+
+    Args:
+        query (str): The query which is passed to `rbw search`
+        limit (int, optional): The amount of entries to limit to. Defaults to 6.
+
+    Returns:
+        list[BitwardenEntry] | None: A list of bitwarden entries found, or None if an error occurred
+    """
     try:
         output = subprocess.run(
             ["rbw", "search", "--raw", query],
@@ -35,8 +49,7 @@ def search(query: str) -> list[BitwardenEntry]:
             check=True,
         ).stdout.decode("utf-8")
 
-        data = json.loads(output)
-        data = [BitwardenEntry.from_dict(x) for x in data]
-        return data[: min(6, len(data))]
+        data = [BitwardenEntry.from_dict(x) for x in json.loads(output)]
+        return data[: min(limit, len(data))]
     except subprocess.CalledProcessError:
-        return []
+        return None
