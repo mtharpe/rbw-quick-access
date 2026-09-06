@@ -1,6 +1,8 @@
+import webbrowser
 from threading import Thread
 from typing import cast
 
+from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
@@ -19,7 +21,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from rbw import BitwardenEntry, search
+import rbw
+
+# from clip import copy_to_clipboard
+from rbw import BitwardenEntry
 
 
 class MainWindow(QMainWindow):
@@ -27,6 +32,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__app = app
         self.__last_result_id = -1
+        self.__selection: BitwardenEntry | None = None
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
@@ -61,14 +67,71 @@ class MainWindow(QMainWindow):
             a0 (QKeyEvent | None): The keypress event, if valid
         """
         super().keyPressEvent(a0)
-        if a0 and a0.key() == Qt.Key.Key_Escape:
-            return self.__app.quit()
 
-        if a0 and a0.key() == Qt.Key.Key_Down and not self.results_widget.hasFocus():
-            self.results_widget.try_focus()
+        if not a0:
+            return
 
-        if a0 and a0.key() == Qt.Key.Key_Up and self.results_widget.unfocus():
-            self.search_widget.setFocus()
+        def __do_app_input() -> bool:
+            """Handles application wide inputs like quitting on ESC, moving focus from search & result widgets
+
+            Returns:
+                bool: True if an action was taken (consuming the input), false otherwise
+            """
+            if a0.key() == Qt.Key.Key_Escape:
+                self.__app.quit()
+                return True
+
+            if a0.key() == Qt.Key.Key_Down and not self.results_widget.hasFocus():
+                self.results_widget.try_focus()
+                return True
+
+            if a0.key() == Qt.Key.Key_Up and self.results_widget.unfocus():
+                self.search_widget.setFocus()
+                return True
+
+            return False
+
+        def __do_selection_input(sel: BitwardenEntry) -> bool:
+            """Handls selection-specific inputs like opening, copying, etc..
+
+            Args:
+                sel (BitwardenEntry): The validated, non-null bitwarden data entry
+
+            Returns:
+                bool: True if an action was taken (consuming the input), false otherwise
+            """
+            if a0.key() in [Qt.Key.Key_Enter, Qt.Key.Key_Return] and sel.uri:
+                webbrowser.open(sel.uri)
+                self.__app.quit()
+                return True
+
+            # At this point if we're not holding the C key, it doesn't matter
+            if a0.key() != Qt.Key.Key_C:
+                return False
+
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+
+            if sel.user and modifiers == Qt.KeyboardModifier.ControlModifier:
+                rbw.copy_username(sel)
+                self.__app.quit()
+                return True
+
+            if modifiers == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
+                rbw.copy_password(sel)
+                self.__app.quit()
+                return True
+
+            if modifiers == (Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ShiftModifier):
+                rbw.copy_totp(sel)
+                self.__app.quit()
+                return True
+
+            return False
+
+        if __do_app_input():
+            return
+        if self.__selection and __do_selection_input(self.__selection):
+            return
 
     def on_results_ready(self, data: tuple[int, list[BitwardenEntry] | None]):
         """Takes the new search results and updates the results widget
@@ -83,6 +146,16 @@ class MainWindow(QMainWindow):
 
         self.__last_result_id = request_id
         self.results_widget.update_entries(results or [])
+
+    def on_selection_changed(self, selection: BitwardenEntry | None):
+        """Delegate used by the emitter in the selection widget to update the current
+        selection, this way when we type a keyboard shortcut we know what to activate
+        it on (if any)
+
+        Args:
+            selection (BitwardenEntry | None): The selection made - None if we went back to search
+        """
+        self.__selection = selection
 
 
 class SearchBox(QLineEdit):
@@ -113,17 +186,23 @@ class SearchBox(QLineEdit):
         Args:
             inp (str): the search query
         """
-        results = search(inp)
+        results = rbw.search(inp)
         self.results_ready.emit((request_id, results))
 
 
 class SearchResults(QListWidget):
+    sel_changed = pyqtSignal(object)
+
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
         self.setItemDelegate(SearchResultDelegate(self))
         self.horizontalScrollBar().hide()  # type: ignore -- this is always gonna be here, right?
         self.__results: list[SearchResult] = []
         self.itemSelectionChanged.connect(self.selection_changed)
+        self.sel_changed.connect(parent.on_selection_changed)
+
+    def on_key_press(self, e: QtGui.QKeyEvent | None):
+        return
 
     def update_entries(self, results: list[BitwardenEntry]):
         self.clear()
@@ -132,8 +211,8 @@ class SearchResults(QListWidget):
             self.addItem(w)
 
     def selection_changed(self):
-        for result in cast(list[SearchResults], self.selectedItems()):
-            print(result.item)
+        for result in cast(list[SearchResult], self.selectedItems()):
+            self.sel_changed.emit(result.bw_data)
 
     def try_focus(self):
         """Attempts to take focus *if* there are any valid search results"""
@@ -149,6 +228,7 @@ class SearchResults(QListWidget):
 
         self.clearFocus()
         self.clearSelection()
+        self.sel_changed.emit(None)
 
         # Allow only if we're at the top of the results (or have none)
         return not len(self.__results) or self.currentRow() == 0
@@ -213,19 +293,18 @@ class SearchResultDelegate(QStyledItemDelegate):
         painter.drawText(
             rect.adjusted(x - rect.x(), 0, 0, 0),
             Qt.AlignmentFlag.AlignVCenter,
-            f"  —  {item.user}  —  {item.uri}",
+            f"  -  {item.user or '—'}  -  {item.uri}",
         )
 
         painter.restore()
 
 
 class SearchResult(QListWidgetItem):
-    def __init__(self, item: BitwardenEntry):
+    def __init__(self, bw_data: BitwardenEntry):
         super().__init__()
-        self.item = item
-        self.setText(item.name)
+        self.bw_data = bw_data
         # Store the data for use in the delegate :)
-        self.setData(Qt.ItemDataRole.UserRole, item)
+        self.setData(Qt.ItemDataRole.UserRole, bw_data)
 
 
 class HotkeyGuide(QWidget):
@@ -235,12 +314,13 @@ class HotkeyGuide(QWidget):
         layout = QHBoxLayout()
         layout.addWidget(self.__make_guide("Ctrl+C", "Copy username"))
         layout.addWidget(self.__make_guide("Ctrl+Shift+C", "Copy password"))
-        layout.addWidget(self.__make_guide("→", "More Actions"))
+        layout.addWidget(self.__make_guide("Ctrl+Alt+C", "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
         lbl = QLabel()
         lbl.setTextFormat(Qt.TextFormat.RichText)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setText(f"""
             <span style="
                 font-family: monospace;

@@ -6,7 +6,6 @@ from gui import MainWindow
 
 
 def main():
-    # TODO: Singleton tracking -- save a PID somewhere or something? Not sure..
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
 

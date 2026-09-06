@@ -1,0 +1,14 @@
+click==8.5.0
+mypy_extensions==1.1.0
+packaging==26.3
+pathspec==1.1.1
+platformdirs==4.11.7
+pyperclip==1.11.0
+PyQt6==6.11.0
+PyQt6-Qt6==6.11.2
+PyQt6_sip==13.12.0
+python-xlib==0.33
+pytokens==0.4.1
+six==1.17.0
+tomli==2.4.1
+typing_extensions==4.16.0

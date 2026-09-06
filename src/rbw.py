@@ -5,7 +5,7 @@ A wrapper around the various rbw commands, including caching for better performa
 """
 
 import json
-import subprocess
+from subprocess import run, CalledProcessError, PIPE
 from dataclasses import dataclass
 
 
@@ -43,13 +43,41 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
         list[BitwardenEntry] | None: A list of bitwarden entries found, or None if an error occurred
     """
     try:
-        output = subprocess.run(
-            ["rbw", "search", "--raw", query],
-            stdout=subprocess.PIPE,
-            check=True,
-        ).stdout.decode("utf-8")
+        output = run(["rbw", "search", "--raw", query], stdout=PIPE, check=True).stdout.decode("utf-8")
 
         data = [BitwardenEntry.from_dict(x) for x in json.loads(output)]
         return data[: min(limit or 1_000_000, len(data))]
-    except subprocess.CalledProcessError:
+    except CalledProcessError:
         return None
+
+def copy_username(entry: BitwardenEntry):
+    try:
+        run(
+            ["rbw", "get", entry.id, "--field", "username", "--clipboard"],
+            stdout=PIPE,
+            check=True,
+        ).stdout.decode("utf-8")
+    except CalledProcessError:
+        return
+
+
+def copy_password(entry: BitwardenEntry):
+    try:
+        run(
+            ["rbw", "get", entry.id, "--field", "password", "--clipboard"],
+            stdout=PIPE,
+            check=True,
+        ).stdout.decode("utf-8")
+    except CalledProcessError:
+        return
+
+
+def copy_totp(entry: BitwardenEntry):
+    try:
+        run(
+            ["rbw", "get", entry.id, "--field", "totp", "--clipboard"],
+            stdout=PIPE,
+            check=True,
+        ).stdout.decode("utf-8")
+    except CalledProcessError:
+        return
