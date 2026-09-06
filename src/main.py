@@ -1,4 +1,4 @@
-from signal import signal, SIGINT
+from signal import SIGINT, signal
 from sys import argv, exit
 
 from PyQt6.QtCore import QTimer
