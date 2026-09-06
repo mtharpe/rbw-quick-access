@@ -1,14 +1,10 @@
-from os import environ
-from sys import argv
-from threading import Thread
+from sys import argv, exit
 
-from PyQt6.QtCore import pyqtBoundSignal
+from PyQt6.QtNetwork import QLocalServer
 from PyQt6.QtWidgets import QApplication
-from websockets.sync import connection, server
 
 from gui import MainWindow
-
-PORT = int(environ.get("PORT", "15621"))
+from ipc import SERVER_NAME, attach
 
 
 def __get_style() -> str:
@@ -35,33 +31,26 @@ def __get_style() -> str:
         return fh.read()
 
 
-def ws_server(show_signal: pyqtBoundSignal):
-    def __handler(_):
-        # Ignore the number of messages coming in
-        show_signal.emit()
-
-    s = server.serve(__handler, "localhost", PORT)
-    s.serve_forever()
-
-
-def start_gui_server():
+def make_gui_server():
     """
     Creates a brand new Application instance and spins up a Websocket
     on a thread to keep an eye open for any "--show" events
     """
+
+    # Just in case there's a stale socket
+    QLocalServer.removeServer(SERVER_NAME)
+
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
     app.setStyleSheet(__get_style())
 
     window = MainWindow()
     window.setMinimumHeight(0)
-
-    ws_thread = Thread(target=ws_server, args=[window.show_requested], daemon=True)
-    ws_thread.start()
+    window.show()
 
     app.exec()
-    ws_thread.join()
 
 
 if __name__ == "__main__":
-    start_gui_server()
+    attach() and exit(0)  # pyright: ignore[reportUnusedExpression] - again, this is easier on the eyes
+    make_gui_server()

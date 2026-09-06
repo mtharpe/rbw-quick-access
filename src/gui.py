@@ -22,18 +22,16 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-
-# from clip import copy_to_clipboard
+from ipc import LocalServer
 from rbw import BitwardenEntry
 
 
 class MainWindow(QMainWindow):
-    show_requested = pyqtSignal()
-
     def __init__(self):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
+        self.__local_server = LocalServer(self)
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
@@ -49,9 +47,6 @@ class MainWindow(QMainWindow):
         layout_widget = QWidget()
         layout_widget.setLayout(layout)
         self.setCentralWidget(layout_widget)
-
-        # Finally, let's set up the signal listener
-        self.show_requested.connect(lambda: self.show())
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
