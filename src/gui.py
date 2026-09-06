@@ -28,9 +28,10 @@ from rbw import BitwardenEntry
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, app: QApplication):
+    show_requested = pyqtSignal()
+
+    def __init__(self):
         super().__init__()
-        self.__app = app
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
         self.search_widget = SearchBox(self)
@@ -48,6 +49,9 @@ class MainWindow(QMainWindow):
         layout_widget = QWidget()
         layout_widget.setLayout(layout)
         self.setCentralWidget(layout_widget)
+
+        # Finally, let's set up the signal listener
+        self.show_requested.connect(lambda: self.show())
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
@@ -78,7 +82,7 @@ class MainWindow(QMainWindow):
                 bool: True if an action was taken (consuming the input), false otherwise
             """
             if a0.key() == Qt.Key.Key_Escape:
-                self.__app.quit()
+                self.hide()
                 return True
 
             if a0.key() == Qt.Key.Key_Down and not self.results_widget.hasFocus():
@@ -102,7 +106,7 @@ class MainWindow(QMainWindow):
             """
             if a0.key() in [Qt.Key.Key_Enter, Qt.Key.Key_Return] and sel.uri:
                 webbrowser.open(sel.uri)
-                self.__app.quit()
+                self.hide()
                 return True
 
             # At this point if we're not holding the C key, it doesn't matter
@@ -113,17 +117,17 @@ class MainWindow(QMainWindow):
 
             if sel.user and modifiers == Qt.KeyboardModifier.ControlModifier:
                 rbw.copy_username(sel)
-                self.__app.quit()
+                self.hide()
                 return True
 
             if modifiers == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
                 rbw.copy_password(sel)
-                self.__app.quit()
+                self.hide()
                 return True
 
             if modifiers == (Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ShiftModifier):
                 rbw.copy_totp(sel)
-                self.__app.quit()
+                self.hide()
                 return True
 
             return False

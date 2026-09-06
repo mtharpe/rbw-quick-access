@@ -1,8 +1,14 @@
+from os import environ
 from sys import argv
+from threading import Thread
 
+from PyQt6.QtCore import pyqtBoundSignal
 from PyQt6.QtWidgets import QApplication
+from websockets.sync import connection, server
 
 from gui import MainWindow
+
+PORT = int(environ.get("PORT", "15621"))
 
 
 def __get_style() -> str:
@@ -29,17 +35,33 @@ def __get_style() -> str:
         return fh.read()
 
 
-def main():
+def ws_server(show_signal: pyqtBoundSignal):
+    def __handler(_):
+        # Ignore the number of messages coming in
+        show_signal.emit()
+
+    s = server.serve(__handler, "localhost", PORT)
+    s.serve_forever()
+
+
+def start_gui_server():
+    """
+    Creates a brand new Application instance and spins up a Websocket
+    on a thread to keep an eye open for any "--show" events
+    """
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
     app.setStyleSheet(__get_style())
 
-    m = MainWindow(app)
-    m.setMinimumHeight(0)
-    m.show()
+    window = MainWindow()
+    window.setMinimumHeight(0)
+
+    ws_thread = Thread(target=ws_server, args=[window.show_requested], daemon=True)
+    ws_thread.start()
 
     app.exec()
+    ws_thread.join()
 
 
 if __name__ == "__main__":
-    main()
+    start_gui_server()
