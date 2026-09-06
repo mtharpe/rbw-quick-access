@@ -27,4 +27,5 @@ We should be able to see the following for each entry, as well as search by:
 ## Dependencies
 
 - Python 3.10
-- `rbw`
+- `rbw` fully configured and logged in
+  - if `rbw ** --clipboard` doesn't work for you, then neither will this :(

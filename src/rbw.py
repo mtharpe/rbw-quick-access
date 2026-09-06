@@ -5,8 +5,8 @@ A wrapper around the various rbw commands, including caching for better performa
 """
 
 import json
-from subprocess import run, CalledProcessError, PIPE
 from dataclasses import dataclass
+from subprocess import PIPE, CalledProcessError, run
 
 
 @dataclass
@@ -49,6 +49,7 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
         return data[: min(limit or 1_000_000, len(data))]
     except CalledProcessError:
         return None
+
 
 def copy_username(entry: BitwardenEntry):
     try:
