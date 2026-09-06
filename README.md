@@ -48,7 +48,8 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 
 # Milestones:
 
-- The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spin up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.
+- ~~The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spin up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.~~
+- Windows & macOS Builds
 - Eventually we'll want a configuration screen which:
   - Would allow you to select a vault
   - ..or a specific folder

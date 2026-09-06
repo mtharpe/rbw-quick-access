@@ -46,6 +46,7 @@ class MainWindow(QMainWindow):
         #  So this is the route around that. Not bad
         layout_widget = QWidget()
         layout_widget.setLayout(layout)
+        self.search_widget.on_input_changed("")
         self.setCentralWidget(layout_widget)
 
     def showEvent(self, a0: QShowEvent | None) -> None:
@@ -56,7 +57,8 @@ class MainWindow(QMainWindow):
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
         super().showEvent(a0)
-        self.search_widget.on_input_changed("")
+        self.results_widget.unfocus()
+        self.search_widget.selectAll()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         """Overrides the generalized keyPressEvent to handle it ourselves after super() is called

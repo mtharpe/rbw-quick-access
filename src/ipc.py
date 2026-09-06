@@ -1,4 +1,3 @@
-# from PyQt6.QtCore import QByteArray
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtWidgets import QWidget
 

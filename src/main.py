@@ -33,10 +33,11 @@ def __get_style() -> str:
         return fh.read()
 
 
-def make_gui_server():
+def main():
     """
-    Creates a brand new Application instance and spins up a Websocket
-    on a thread to keep an eye open for any "--show" events
+    Creates a brand new Application instance and starts up a QLocalServer
+        which listens for future websocket attaches. Also handles some
+        really nasty SIGINT garbage with a functional workaround.
     """
 
     # Just in case there's a stale socket
@@ -66,4 +67,4 @@ def make_gui_server():
 
 if __name__ == "__main__":
     attach() and exit(0)  # pyright: ignore[reportUnusedExpression] - again, this is easier on the eyes
-    make_gui_server()
+    main()
