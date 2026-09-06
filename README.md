@@ -2,6 +2,8 @@
 
 This is a tool that aims to replicate 1Password's Quick-Access overlay backed by [`rbw`](https://github.com/doy/rbw).
 
+## Skip straight to the [Downloads](https://git.oitsjustjose.com/me/rbw-quick-access/-/releases)
+
 # Demo
 
 ![](https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4)
