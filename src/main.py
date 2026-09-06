@@ -15,13 +15,13 @@ def __get_style() -> str:
     # DO NOT TOUCH -- contents of `style.qss` are put between the
     #  two sentinels below at build-time.
     style = """
-    # STYLE_START
-    # STYLE_END
-    """
+    /* # STYLE_START */
+    /* # STYLE_END */
+    """.strip()
 
     # If the style was touched, we'll have more than 2 lines, since we
     #  know we'll have 2 for the sentinels
-    if len(style.strip().split("\n")) > 2:
+    if len(style.split("\n")) > 2:
         return style
 
     # Open from disk then
