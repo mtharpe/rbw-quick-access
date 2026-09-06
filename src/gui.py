@@ -314,7 +314,7 @@ class HotkeyGuide(QWidget):
         layout = QHBoxLayout()
         layout.addWidget(self.__make_guide("Ctrl+C", "Copy username"))
         layout.addWidget(self.__make_guide("Ctrl+Shift+C", "Copy password"))
-        layout.addWidget(self.__make_guide("Ctrl+Alt+C", "Copy totp"))
+        layout.addWidget(self.__make_guide("Alt+Shift+C", "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
