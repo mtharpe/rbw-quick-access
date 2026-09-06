@@ -4,9 +4,7 @@ This is a tool that aims to replicate 1Password's Quick-Access overlay backed by
 
 # Demo
 
-<video width="320" height="240" controls>
-  <source src="https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4" type="video/mp4">
-</video>
+![](https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4)
 
 # Design Goals
 
@@ -48,7 +46,7 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 
 # Milestones:
 
-- The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spins up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.
+- The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spin up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.
 - Eventually we'll want a configuration screen which:
   - Would allow you to select a vault
   - ..or a specific folder
