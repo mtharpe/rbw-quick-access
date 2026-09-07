@@ -20,7 +20,7 @@ cp -r "$dir/src/dist/main" ./build
 # Delete our tmpdir for cleanliness
 rm -rf $dir
 # Copy the installation script to the build dir
-cp install.sh ./build
+cp install.linux.sh ./build
 # A tiny bit more preprocessing
 cd ./build
 mv main rbw-quick-access

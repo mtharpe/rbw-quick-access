@@ -21,9 +21,13 @@ cp -r "$dir/src/dist/rbw-quick-access" ./build
 # Delete our tmpdir for cleanliness
 rm -rf $dir
 # Copy the installation script to the build dir
-cp install.sh ./build
+cp install.mac.sh ./build
+# Same goes for the platform-specific `rbw` build (mac only)
+mkdir -p ./build/rbw/
+cp "./rbw/$(arch)/rbw" ./build/rbw/
+cp "./rbw/$(arch)/rbw-agent" ./build/rbw/
 # A tiny bit more preprocessing
 cd ./build
 # And finally zip everything up for release.
-zip ./build.zip ./_internal ./rbw-quick-access && cd ..
+zip -r ./build.zip ./_internal ./rbw-quick-access ./rbw ./install.mac.sh && cd ..
 

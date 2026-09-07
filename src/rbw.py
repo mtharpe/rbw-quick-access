@@ -8,6 +8,11 @@ import json
 from dataclasses import dataclass
 from subprocess import PIPE, CalledProcessError, run
 
+from macos import IS_MAC, resolve_macos_rbw
+
+# Since we use a dynamic `rbw` executable (thanks to the macOS build being slow), we have to determine it now.
+RBW: str = resolve_macos_rbw() if IS_MAC else "rbw"
+
 
 @dataclass
 class BitwardenEntry:
@@ -43,7 +48,7 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
         list[BitwardenEntry] | None: A list of bitwarden entries found, or None if an error occurred
     """
     try:
-        output = run(["rbw", "search", "--raw", query], stdout=PIPE, check=True).stdout.decode("utf-8")
+        output = run([RBW, "search", "--raw", query], stdout=PIPE, check=True).stdout.decode("utf-8")
 
         data = [BitwardenEntry.from_dict(x) for x in json.loads(output)]
         return data[: min(limit or 1_000_000, len(data))]
@@ -54,7 +59,7 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
 def copy_username(entry: BitwardenEntry):
     try:
         run(
-            ["rbw", "get", entry.id, "--field", "username", "--clipboard"],
+            [RBW, "get", entry.id, "--field", "username", "--clipboard"],
             stdout=PIPE,
             check=True,
         ).stdout.decode("utf-8")
@@ -65,7 +70,7 @@ def copy_username(entry: BitwardenEntry):
 def copy_password(entry: BitwardenEntry):
     try:
         run(
-            ["rbw", "get", entry.id, "--field", "password", "--clipboard"],
+            [RBW, "get", entry.id, "--field", "password", "--clipboard"],
             stdout=PIPE,
             check=True,
         ).stdout.decode("utf-8")
@@ -76,7 +81,7 @@ def copy_password(entry: BitwardenEntry):
 def copy_totp(entry: BitwardenEntry):
     try:
         run(
-            ["rbw", "get", entry.id, "--field", "totp", "--clipboard"],
+            [RBW, "get", entry.id, "--field", "totp", "--clipboard"],
             stdout=PIPE,
             check=True,
         ).stdout.decode("utf-8")

@@ -4,7 +4,7 @@ from typing import cast
 
 from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QFontMetrics, QKeyEvent, QShowEvent
+from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 import rbw
 from ipc import LocalServer
+from macos import IS_MAC
 from rbw import BitwardenEntry
 
 
@@ -31,7 +32,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
-        self.__local_server = LocalServer(self)
+        self.__local_server = LocalServer(self)  # Kept as a var to avoid GC from killing it
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
                 self.hide()
                 return True
 
+            print(self.results_widget.hasFocus())
             if a0.key() == Qt.Key.Key_Down and not self.results_widget.hasFocus():
                 self.results_widget.try_focus()
                 return True
@@ -218,6 +220,7 @@ class SearchResults(QListWidget):
 
     def try_focus(self):
         """Attempts to take focus *if* there are any valid search results"""
+        print("try_focus")
         if not len(self.__results):
             return
 
@@ -313,24 +316,31 @@ class HotkeyGuide(QWidget):
     def __init__(self):
         super().__init__()
 
+        ctrl = "Cmd" if IS_MAC else "Ctrl"
+        alt = "Opt" if IS_MAC else "Alt"
+
         layout = QHBoxLayout()
-        layout.addWidget(self.__make_guide("Ctrl+C", "Copy username"))
-        layout.addWidget(self.__make_guide("Ctrl+Shift+C", "Copy password"))
-        layout.addWidget(self.__make_guide("Alt+Shift+C", "Copy totp"))
+        layout.addWidget(self.__make_guide(f"{ctrl}+C", "Copy username"))
+        layout.addWidget(self.__make_guide(f"{ctrl}+Shift+C", "Copy password"))
+        layout.addWidget(self.__make_guide(f"{alt}+Shift+C", "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
+
+        # TODO: Make it easy for users to pick this font in the future
+        family = QFontInfo(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)).family()
+
         lbl = QLabel()
         lbl.setTextFormat(Qt.TextFormat.RichText)
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setText(f"""
             <span style="
-                font-family: monospace;
+                font-family: {family};
                 background-color: #9aa5ce;
                 color: #16161e;
             ">
                 {keybind}
             </span>
-            &nbsp; {text}
+        &nbsp; {text}
         """)
         return lbl
