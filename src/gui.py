@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
         super().showEvent(a0)
-        self.results_widget.unfocus()
+        self.search_widget.setFocus()
         self.search_widget.selectAll()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:

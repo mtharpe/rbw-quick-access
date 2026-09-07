@@ -12,10 +12,7 @@ sed -i '' \
     -e '/# STYLE_START/,/# STYLE_END/{//! d;}' \
     main.py
 # Finally we can just build..
-../.venv/bin/pyinstaller \
-    --hidden-import pkgutil \
-    --name rbw-quick-access \
-    main.py
+../.venv/bin/pyinstaller --name rbw-quick-access main.py
 
 # Copy over the artifacts
 cd "$start_dir"
