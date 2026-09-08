@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         layout_widget.setLayout(layout)
         self.search_widget.on_input_changed("")
         self.setCentralWidget(layout_widget)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
