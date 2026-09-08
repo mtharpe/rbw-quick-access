@@ -7,30 +7,7 @@ from PyQt6.QtWidgets import QApplication
 
 from gui import MainWindow
 from ipc import SERVER_NAME, attach
-
-
-def __get_style() -> str:
-    """Does weird build-time checking to ensure that the style is
-     loaded from `styles.qss` when needed, but isn't when it's not.
-
-    Returns:
-        str: The QSS style
-    """
-    # DO NOT TOUCH -- contents of `style.qss` are put between the
-    #  two sentinels below at build-time.
-    style = """
-    /* # STYLE_START */
-    /* # STYLE_END */
-    """.strip()
-
-    # If the style was touched, we'll have more than 2 lines, since we
-    #  know we'll have 2 for the sentinels
-    if len(style.split("\n")) > 2:
-        return style
-
-    # Open from disk then
-    with open("style.qss", "r") as fh:
-        return fh.read()
+from style import DEFAULT_STYLE
 
 
 def main():
@@ -45,7 +22,7 @@ def main():
 
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
-    app.setStyleSheet(__get_style())
+    app.setStyleSheet(DEFAULT_STYLE)
 
     window = MainWindow()
     window.setMinimumHeight(0)

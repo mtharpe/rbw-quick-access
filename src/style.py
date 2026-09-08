@@ -1,3 +1,11 @@
+"""
+@author Jose Stovall | oitsjustjose
+At some point this will contain more than a const str
+    such as config reading for the current style vals.
+    Until then, it does just that.
+"""
+
+DEFAULT_STYLE = """
 * {
     color: #c0caf5;
 }
@@ -45,3 +53,4 @@ QListWidget::item::selected {
     /* TEXT COLOR IS HANDLED IN THE DELEGATE */
     background-color: #bb9af7;
 }
+"""
