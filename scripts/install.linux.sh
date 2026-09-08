@@ -9,6 +9,7 @@ fi
 INSTALL_DIR="/opt/rbw-quick-access"
 echo "Installing to $INSTALL_DIR..."
 
+pkill -9 rbw-quick-acces
 # Clean up the old install
 rm -rf "$INSTALL_DIR"
 rm -f /usr/local/bin/rbw-quick-access

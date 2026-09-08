@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
         super().showEvent(a0)
+        self.results_widget.unfocus()
         self.search_widget.setFocus()
         self.search_widget.selectAll()
 
@@ -69,8 +70,6 @@ class MainWindow(QMainWindow):
         Args:
             a0 (QKeyEvent | None): The keypress event, if valid
         """
-        super().keyPressEvent(a0)
-
         if not a0:
             return
 
@@ -84,7 +83,6 @@ class MainWindow(QMainWindow):
                 self.hide()
                 return True
 
-            print(self.results_widget.hasFocus())
             if a0.key() == Qt.Key.Key_Down and not self.results_widget.hasFocus():
                 self.results_widget.try_focus()
                 return True
@@ -133,9 +131,11 @@ class MainWindow(QMainWindow):
             return False
 
         if __do_app_input():
-            return
+            return a0.accept()
         if self.__selection and __do_selection_input(self.__selection):
-            return
+            return a0.accept()
+        # Only call super when we didn't do something special
+        super().keyPressEvent(a0)
 
     def on_results_ready(self, data: tuple[int, list[BitwardenEntry] | None]):
         """Takes the new search results and updates the results widget
@@ -215,28 +215,30 @@ class SearchResults(QListWidget):
             self.addItem(w)
 
     def selection_changed(self):
-        for result in cast(list[SearchResult], self.selectedItems()):
-            self.sel_changed.emit(result.bw_data)
+        items = cast(list[SearchResult], self.selectedItems())
+        # `items` will be EMPTY when `self.clearSelection()` is called,
+        #   hence the check and ternary.
+        # Also, we won't have (or don't care about) more than 1 entry
+        self.sel_changed.emit(items[0].bw_data if items else None)
 
     def try_focus(self):
         """Attempts to take focus *if* there are any valid search results"""
-        print("try_focus")
         if not len(self.__results):
             return
 
         self.setFocus()
+        self.setCurrentRow(0)
         self.__results[0].setSelected(True)
 
     def unfocus(self):
-        if not self.hasFocus():
+        # Allow only if we're at the top of the results (or have none)
+        if self.__results and self.currentRow() != 0:
             return False
 
         self.clearFocus()
         self.clearSelection()
-        self.sel_changed.emit(None)
 
-        # Allow only if we're at the top of the results (or have none)
-        return not len(self.__results) or self.currentRow() == 0
+        return True
 
 
 class SearchResultDelegate(QStyledItemDelegate):
