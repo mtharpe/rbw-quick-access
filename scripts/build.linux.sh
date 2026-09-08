@@ -1,29 +1,24 @@
 #!/bin/bash
 
-# # Keep track of the original directory
-start_dir=$(pwd)
+# Validate that the version arg is provided
+if [ -z "$1" ]; then
+    echo "Missing required positional argument: <version>"
+    exit 1
+fi
 
-# maketmp, copy to the tmp dir, move to the src dir
-dir=$(mktemp -d) && cp -r . $dir && cd $dir/src
-# Copy the contents of style.qss into the contents between the two sentinels
-sed -i \
-    -e '/# STYLE_START/r style.qss' \
-    -e '/# STYLE_START/,/# STYLE_END/{//!d}' \
-    main.py
-# Finally we can just build..
-../.venv/bin/pyinstaller --name rbw-quick-access main.py
+version="$1"
+dist_dir=build/dist/rbw-quick-access
+artifact_name="rbw-quick-access-linux_$version.tar.gz"
 
-# Copy over the artifacts
-cd "$start_dir"
-rm -rf ./build # Just in case
-cp -r "$dir/src/dist/main" ./build
-# Delete our tmpdir for cleanliness
-rm -rf $dir
+python -m PyInstaller \
+    --workpath "build/work" \
+    --distpath "build/dist" \
+    --specpath "build/spec" \
+    --name rbw-quick-access \
+    src/main.py
+
 # Copy the installation script to the build dir
-cp install.linux.sh ./build
-# A tiny bit more preprocessing
-cd ./build
-mv main rbw-quick-access
-# And finally zip everything up for release.
-zip ./build.zip ./_internal ./rbw-quick-access ./install.sh && cd ..
-
+cp scripts/install.linux.sh build/dist/rbw-quick-access
+# And finally tar everything up for release. We `cd` into
+#  build to avoid the untar'd path to start with build/
+tar -zcvf $artifact_name -C build/dist rbw-quick-access 

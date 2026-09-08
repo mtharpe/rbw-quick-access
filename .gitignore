@@ -2,5 +2,5 @@ __pycache__
 .DS_Store
 .venv
 build
-rbw-quick-access.*.tar.gz
-rbw-quick-access.*.zip
+rbw-quick-access*.tar.gz
+rbw-quick-access*.zip
