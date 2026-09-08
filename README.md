@@ -8,6 +8,12 @@ This is a tool that aims to replicate 1Password's Quick-Access overlay backed by
 
 ![](https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4)
 
+# Limitations
+
+Currently there's one particularly big limitation that I can't fix without killing performance: `rbw` **also shows archived items**. The best route is to make sure your archive isn't massive (mine was in the demo above, as I'd just moved from 1Password and it brought over those items).
+
+If you need to clear out your archived items, you'll have to do it from the Vaultwarden web ui (limited at 500 items at a time), Bitwarden doesn't offer a mass-select-and-trash option. Don't forget to refresh your BItwarden before proceeding.
+
 # Design Goals
 
 ## Quick Startup
