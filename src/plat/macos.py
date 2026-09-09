@@ -24,9 +24,11 @@ def resolve_macos_rbw() -> str:
     Returns:
         str: The resolved, confirmed existing path for `rbw`
     """
+    # Remap i386 to x86_64 because nothing else uses i386 >_>
+    arch = "x86_64" if machine() == "i386" else machine()
     #     We use `..` here because we'll be in `src` when doing local dev
     #                  vv
-    dev_build = Path(f"../rbw/{machine()}/rbw")
+    dev_build = Path(f"../rbw/{arch}/rbw")
     if dev_build.exists():
         return str(dev_build)
 
