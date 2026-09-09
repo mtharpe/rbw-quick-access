@@ -24,7 +24,6 @@ class LocalServer(QLocalServer):
 
     def __handle_socket(self, sock: QLocalSocket):
         """Another straight forward handler, for sockets this time"""
-        # message = bytes(socket.readAll()).decode() -- ???
         msg = sock.readAll().data().decode()
 
         if msg == "show":

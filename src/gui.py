@@ -2,7 +2,7 @@ import webbrowser
 from threading import Thread
 from typing import cast
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtWidgets
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
@@ -21,10 +21,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from keybinds import get_hotkey_listener
 import rbw
 from ipc import LocalServer
-from platform import IS_MAC
+from plat import IS_MAC, get_global_show_listener
 from rbw import BitwardenEntry
 
 
@@ -34,8 +33,8 @@ class MainWindow(QMainWindow):
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
         self.__local_server = LocalServer(self)  # Kept as a var to avoid GC from killing it
-        self.__hotkey_listener = get_hotkey_listener(self)  # Also kept to save from the GC
-        self.__hotkey_listener and self.__hotkey_listener
+        self.__global_hk_listener = get_global_show_listener(self)
+        self.__global_hk_listener.signal.connect(self.show)
 
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)

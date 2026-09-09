@@ -5,13 +5,13 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 """
 
 from pathlib import Path
-from platform import mac_ver, machine
+from platform import machine
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject
 from quickmachotkey import mask, quickHotKey
 from quickmachotkey.constants import cmdKey, kVK_ANSI_Backslash, shiftKey
 
-IS_MAC = bool(mac_ver()[0])
+from plat import GlobalShowListener
 
 
 def resolve_macos_rbw() -> str:
@@ -42,17 +42,15 @@ def resolve_macos_rbw() -> str:
 # TODO: make this super easy to rebind
 #  Probably either (a) a binding of user-key to qmhk.constants.*key, or
 #                  (b) maybe something exists to get the same key value?
-class MacOSHotkeyListener(QObject):
+class MacOSGlobalShowListener(GlobalShowListener):
     """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
-
-    show_hotkey_pressed = pyqtSignal()
 
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
 
         @quickHotKey(virtualKey=kVK_ANSI_Backslash, modifierMask=mask(cmdKey, shiftKey))
         def show() -> None:
-            self.show_hotkey_pressed.emit()
+            self.signal.emit()
 
         # Unused, just here for the sake of avoiding GC (again T_T)
         self._show_event = show
