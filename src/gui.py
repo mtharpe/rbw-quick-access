@@ -21,9 +21,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from keybinds import get_hotkey_listener
 import rbw
 from ipc import LocalServer
-from macos import IS_MAC
+from platform import IS_MAC
 from rbw import BitwardenEntry
 
 
@@ -33,6 +34,9 @@ class MainWindow(QMainWindow):
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
         self.__local_server = LocalServer(self)  # Kept as a var to avoid GC from killing it
+        self.__hotkey_listener = get_hotkey_listener(self)  # Also kept to save from the GC
+        self.__hotkey_listener and self.__hotkey_listener
+
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
@@ -205,8 +209,9 @@ class SearchResults(QListWidget):
         self.itemSelectionChanged.connect(self.selection_changed)
         self.sel_changed.connect(parent.on_selection_changed)
 
-    def on_key_press(self, e: QtGui.QKeyEvent | None):
-        return
+    # TODO: Do I still need this? I think this is a stub that never ended up being necessary...
+    # def on_key_press(self, e: QtGui.QKeyEvent | None):
+    #     return
 
     def update_entries(self, results: list[BitwardenEntry]):
         self.clear()
@@ -237,7 +242,6 @@ class SearchResults(QListWidget):
 
         self.clearFocus()
         self.clearSelection()
-
         return True
 
 

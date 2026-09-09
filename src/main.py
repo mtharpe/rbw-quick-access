@@ -26,7 +26,8 @@ def main():
 
     window = MainWindow()
     window.setMinimumHeight(0)
-    window.show()
+    # No longer show immediately -- rely on keybinds.
+    # window.show()
 
     # Since the app is stuck in an `exec` loop and the `LocalServer` embedded
     # in the MainWindow is running, we need to handle SIGINT differently. Ugh.

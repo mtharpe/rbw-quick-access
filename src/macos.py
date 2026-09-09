@@ -1,5 +1,15 @@
+"""
+@author Jose Stovall | oitsjustjose
+Various macOS-specific handlers and helpers. Shout-out to the guy
+ who sold me an M1 Mac Mini to develop this on for like $300.
+"""
+
 from pathlib import Path
 from platform import mac_ver, machine
+
+from PyQt6.QtCore import QObject, pyqtSignal
+from quickmachotkey import mask, quickHotKey
+from quickmachotkey.constants import cmdKey, kVK_ANSI_Backslash, shiftKey
 
 IS_MAC = bool(mac_ver()[0])
 
@@ -27,3 +37,22 @@ def resolve_macos_rbw() -> str:
         return str(release_build)
 
     raise Exception(f"Failed to find a valid `rbw` binary!! Checked {dev_build} and {release_build}")  # noqa: TRY002
+
+
+# TODO: make this super easy to rebind
+#  Probably either (a) a binding of user-key to qmhk.constants.*key, or
+#                  (b) maybe something exists to get the same key value?
+class MacOSHotkeyListener(QObject):
+    """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
+
+    show_hotkey_pressed = pyqtSignal()
+
+    def __init__(self, parent: QObject | None) -> None:
+        super().__init__(parent)
+
+        @quickHotKey(virtualKey=kVK_ANSI_Backslash, modifierMask=mask(cmdKey, shiftKey))
+        def show() -> None:
+            self.show_hotkey_pressed.emit()
+
+        # Unused, just here for the sake of avoiding GC (again T_T)
+        self._show_event = show

@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass
 from subprocess import PIPE, CalledProcessError, run
 
-from macos import IS_MAC, resolve_macos_rbw
+from platform import IS_MAC, resolve_macos_rbw
 
 # Since we use a dynamic `rbw` executable (thanks to the macOS build being slow), we have to determine it now.
 RBW: str = resolve_macos_rbw() if IS_MAC else "rbw"
