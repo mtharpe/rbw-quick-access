@@ -9,7 +9,7 @@ from platform import machine
 
 from PyQt6.QtCore import QObject
 
-from plat import IS_MAC, GlobalShowListener
+from plat import IS_MAC, PlatformHandler
 
 
 def resolve_macos_rbw() -> str:
@@ -30,7 +30,7 @@ def resolve_macos_rbw() -> str:
     if dev_build.exists():
         return str(dev_build)
 
-    release_build = Path("/opt/rbw-quick-access/rbw")
+    release_build = Path("/usr/local/bin/rbw")
     if release_build.exists():
         return str(release_build)
 
@@ -40,20 +40,23 @@ def resolve_macos_rbw() -> str:
 # TODO: make this super easy to rebind
 #  Probably either (a) a binding of user-key to qmhk.constants.*key, or
 #                  (b) maybe something exists to get the same key value?
-class MacOSGlobalShowListener(GlobalShowListener):
+class MacOsPlatformHandler(PlatformHandler):
     """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
-
 
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
 
         if IS_MAC:  # TODO: is this necessary?
+            from AppKit import NSApplication, NSApplicationActivationPolicyAccessory  # type: ignore
             from quickmachotkey import mask, quickHotKey
             from quickmachotkey.constants import cmdKey, kVK_ANSI_Backslash, shiftKey
 
+            app = NSApplication.sharedApplication()
+            app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+
             @quickHotKey(virtualKey=kVK_ANSI_Backslash, modifierMask=mask(cmdKey, shiftKey))
             def show() -> None:
-                self.signal.emit()
+                self.on_show_signal.emit()
 
             # Unused, just here for the sake of avoiding GC (again T_T)
             self._show_event = show
@@ -64,3 +67,10 @@ class MacOSGlobalShowListener(GlobalShowListener):
 
             NSApplication.sharedApplication().activate()
         return super().on_show()
+
+    def on_hide(self):
+        if IS_MAC:
+            from AppKit import NSApplication  # type:ignore[import]
+
+            NSApplication.sharedApplication().deactivate()
+        return super().on_hide()

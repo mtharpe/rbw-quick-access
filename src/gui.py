@@ -2,9 +2,9 @@ import webbrowser
 from threading import Thread
 from typing import cast
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtWidgets
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QShowEvent
+from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QHideEvent, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-from plat import IS_MAC, get_global_show_listener
+from plat import IS_MAC, get_platform_handler
 from rbw import BitwardenEntry
 
 
@@ -31,8 +31,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
-        self.__global_hk_listener = get_global_show_listener(self)
-        self.__global_hk_listener.signal.connect(self.show)
+        self.__platform_handler = get_platform_handler(self)
+        self.__platform_handler.on_show_signal.connect(self.show)
 
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
@@ -51,7 +51,6 @@ class MainWindow(QMainWindow):
         self.search_widget.on_input_changed("")
         self.setCentralWidget(layout_widget)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
-        # self.setFixedSize(self.size())
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
@@ -67,7 +66,17 @@ class MainWindow(QMainWindow):
         self.results_widget.unfocus()
         self.search_widget.setFocus()
         self.search_widget.selectAll()
-        self.__global_hk_listener.on_show()
+        self.__platform_handler.on_show()
+
+    def hideEvent(self, a0: QHideEvent | None) -> None:
+        """Called when the QWidget is hidden. In this case, it's only used
+        to call the platform handler's on_hide function if relevant.
+
+        Args:a
+            a0 (QShowEvent | None): The event in (unused - passed to super)
+        """
+        self.__platform_handler.on_hide()
+        return super().hideEvent(a0)
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         """Overrides the generalized keyPressEvent to handle it ourselves after super() is called

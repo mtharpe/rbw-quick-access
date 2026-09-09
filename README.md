@@ -38,6 +38,10 @@ To succeed in replicating the feel (and more importantly, functionality) of the 
 
 After 8 years with this system, the keyboard shortcuts were pretty well engrained in my head
 
+- Show the application with:
+  - `super+shift+\`
+  - `cmd+shift+\`
+  - `win+shift+\`
 - `enter` opens the URL, if there is one.
 - ~~`alt + enter` does the same? I'm not sure why...~~ since this was redundant, I didn't bother
 - `ctrl + c` copies the username (if present)
@@ -48,9 +52,9 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 
 ## Dependencies
 
-- Python 3.10
 - `rbw` fully configured and logged in
   - if `rbw ** --clipboard` doesn't work for you, then neither will this :(
+- **[`brew`](https://brew.sh/) for macOS users**
 
 # Milestones:
 

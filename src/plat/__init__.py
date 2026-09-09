@@ -9,20 +9,24 @@ from PyQt6.QtCore import QObject, pyqtSignal
 IS_MAC = bool(mac_ver()[0])
 
 
-class GlobalShowListener(QObject):
-    """A relatively barebone impl just for the signal to be unified"""
+class PlatformHandler(QObject):
+    """A common Platform Handler superclass to be used for specific niche oddities (looking at you macOS)"""
 
-    signal = pyqtSignal()
+    on_show_signal = pyqtSignal()
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
 
     def on_show(self):
-        """Used to allow platform-specific callbacks"""
+        """Used to allow platform-specific callbacks on the show event"""
 
-def get_global_show_listener(parent: QObject) -> GlobalShowListener:
+    def on_hide(self):
+        """Used to allow platform-specific callbacks on the hide event"""
+
+
+def get_platform_handler(parent: QObject) -> PlatformHandler:
     if IS_MAC:
-        from plat.macos import MacOSGlobalShowListener
+        from plat.macos import MacOsPlatformHandler
 
-        return MacOSGlobalShowListener(parent)
-    return GlobalShowListener()
+        return MacOsPlatformHandler(parent)
+    return PlatformHandler()
