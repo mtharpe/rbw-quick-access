@@ -17,8 +17,23 @@ WOOF - this was a rough one. I ran into so many challenges along the way:
 -   Several places where I had to guard against imports that don't exist on non-mac systems
 -   SO many weird specific Mac-specific things for making sure the window worked and behaved as expected. Mildly cursed code, honestly.
 
+## Added
+
+-   Global Hotkey Support
+    -   **Linux**:
+        -   The Linux approach uses an approach based on [Waybind](https://github.com/postman721/Waybind).
+        -   It should be compatible with X11, Wayland, and WM/DE.
+        -   I use Wayland and Niri and these new changes worked very well.
+        -   Triggered with <kbd>super</kbd> + <kbd>shift</kbd> + <kbd>\\</kbd>\|
+    -   **macOS**:
+        -   Uses [QuickMacHotKey](https://github.com/glyph/QuickMacHotKey)
+        -   Triggered with <kbd>cmd</kbd> + <kbd>shift</kbd> + <kbd>\\</kbd>
+    -   For now, the hotkey is still hard-coded but the next update will add in configurability for this and many other UI and behavioral components!
+
 ## Changed
 
+-   Moved to a single, persistent background application which is reveal
+-   Rewrote Linux install to use `systemctl --user` if available, spins up in the background and warns you if not
 -   Rewrote all build scripts to use `cd -a` to avoid broken symlinks
 -   Likewise, build scripts now use `tar.gz` files for artifacts to maintain symlinks.
 -   Rewrote install scripts to use `cd -a` and include macOS build flows
