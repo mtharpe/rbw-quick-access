@@ -14,6 +14,7 @@ INSTALL_DIR="/opt/rbw-quick-access"
 echo "Installing to $INSTALL_DIR..."
 
 # Clean up the old install
+pkill -9 rbw rbw-agent rbw-quick-access
 sudo rm -rf "$INSTALL_DIR"
 sudo rm -f /usr/local/bin/rbw-quick-access
 
@@ -31,4 +32,14 @@ sudo cp -a ./rbw/rbw-agent /usr/local/bin/
 # Finally make a symlink to the `/opt` exec in /usr/local/bin
 sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access
 
+read -p "Should rbw-quick-access start on login? y/n" -n 1 -r
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Add rbw-quick-access as a login item
+    osascript -e \
+        'tell application "System Events" to make login item at end with properties {path:"/usr/local/bin/rbw-quick-access", hidden:true}'
+fi
+
+bash -c "nohup rbw-quick-access >/dev/null 2>&1  &"
+
 echo "Installed to $INSTALL_DIR with a symlink in /usr/local/bin"
+echo " Give it a try with CMD+Shift+\\!"
