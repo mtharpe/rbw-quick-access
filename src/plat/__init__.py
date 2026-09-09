@@ -2,11 +2,13 @@
 A global, cross-platform(ish) handler for tons of things.
 """
 
-from platform import mac_ver
+from sys import platform
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-IS_MAC = bool(mac_ver()[0])
+
+IS_MAC = platform == "darwin"
+IS_LINUX = platform == "linux"
 
 
 class PlatformHandler(QObject):
@@ -29,4 +31,8 @@ def get_platform_handler(parent: QObject) -> PlatformHandler:
         from plat.macos import MacOsPlatformHandler
 
         return MacOsPlatformHandler(parent)
+    elif IS_LINUX:
+        from plat.linux import LinuxPlatformHandler
+
+        return LinuxPlatformHandler(parent)
     return PlatformHandler()
