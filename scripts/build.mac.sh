@@ -7,6 +7,9 @@ if [ -z "$1" ]; then
 fi
 
 version="$1"
+
+declare -a arches=("arm64", "")
+
 dist_dir=build/dist/rbw-quick-access
 artifact_name="rbw-quick-access-macos-$(arch)_$version.tar.gz"
 
