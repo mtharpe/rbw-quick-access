@@ -1,12 +1,10 @@
 from signal import SIGINT, signal
-from sys import argv, exit
+from sys import argv
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtNetwork import QLocalServer
 from PyQt6.QtWidgets import QApplication
 
 from gui import MainWindow
-from ipc import SERVER_NAME, attach
 from style import DEFAULT_STYLE
 
 
@@ -17,9 +15,6 @@ def main():
         really nasty SIGINT garbage with a functional workaround.
     """
 
-    # Just in case there's a stale socket
-    QLocalServer.removeServer(SERVER_NAME)
-
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
     app.setStyleSheet(DEFAULT_STYLE)
@@ -29,7 +24,7 @@ def main():
     # No longer show immediately -- rely on keybinds.
     # window.show()
 
-    # Since the app is stuck in an `exec` loop and the `LocalServer` embedded
+    # Since the app is stuck in an `exec` loop and the `hotkey` embedded loop
     # in the MainWindow is running, we need to handle SIGINT differently. Ugh.
     signal(SIGINT, lambda *_: app.quit())
     # Apparently this is the QT-styled way of handling this? Gross.
@@ -44,5 +39,4 @@ def main():
 
 
 if __name__ == "__main__":
-    attach() and exit(0)  # pyright: ignore[reportUnusedExpression] - again, this is easier on the eyes
     main()

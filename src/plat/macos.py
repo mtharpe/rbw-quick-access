@@ -8,10 +8,8 @@ from pathlib import Path
 from platform import machine
 
 from PyQt6.QtCore import QObject
-from quickmachotkey import mask, quickHotKey
-from quickmachotkey.constants import cmdKey, kVK_ANSI_Backslash, shiftKey
 
-from plat import GlobalShowListener
+from plat import IS_MAC, GlobalShowListener
 
 
 def resolve_macos_rbw() -> str:
@@ -45,12 +43,24 @@ def resolve_macos_rbw() -> str:
 class MacOSGlobalShowListener(GlobalShowListener):
     """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
 
+
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
 
-        @quickHotKey(virtualKey=kVK_ANSI_Backslash, modifierMask=mask(cmdKey, shiftKey))
-        def show() -> None:
-            self.signal.emit()
+        if IS_MAC:  # TODO: is this necessary?
+            from quickmachotkey import mask, quickHotKey
+            from quickmachotkey.constants import cmdKey, kVK_ANSI_Backslash, shiftKey
 
-        # Unused, just here for the sake of avoiding GC (again T_T)
-        self._show_event = show
+            @quickHotKey(virtualKey=kVK_ANSI_Backslash, modifierMask=mask(cmdKey, shiftKey))
+            def show() -> None:
+                self.signal.emit()
+
+            # Unused, just here for the sake of avoiding GC (again T_T)
+            self._show_event = show
+
+    def on_show(self):
+        if IS_MAC:
+            from AppKit import NSApplication  # type:ignore[import]
+
+            NSApplication.sharedApplication().activate()
+        return super().on_show()

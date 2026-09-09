@@ -2,7 +2,7 @@ import webbrowser
 from threading import Thread
 from typing import cast
 
-from PyQt6 import QtWidgets
+from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
@@ -22,7 +22,6 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-from ipc import LocalServer
 from plat import IS_MAC, get_global_show_listener
 from rbw import BitwardenEntry
 
@@ -32,7 +31,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
-        self.__local_server = LocalServer(self)  # Kept as a var to avoid GC from killing it
         self.__global_hk_listener = get_global_show_listener(self)
         self.__global_hk_listener.signal.connect(self.show)
 
@@ -52,19 +50,24 @@ class MainWindow(QMainWindow):
         layout_widget.setLayout(layout)
         self.search_widget.on_input_changed("")
         self.setCentralWidget(layout_widget)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        # self.setFixedSize(self.size())
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
         the search results with the results from an empty string search
 
-        Args:
+        Args:a
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
         super().showEvent(a0)
+
+        self.raise_()
+        self.activateWindow()
         self.results_widget.unfocus()
         self.search_widget.setFocus()
         self.search_widget.selectAll()
+        self.__global_hk_listener.on_show()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         """Overrides the generalized keyPressEvent to handle it ourselves after super() is called
@@ -178,6 +181,17 @@ class SearchBox(QLineEdit):
         self.setFixedHeight(72)
         self.textChanged.connect(self.on_input_changed)
 
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+        """Overrides the ↑, ↓ and escape inputs so that the main window can handle it on its own"""
+        if not a0:
+            return
+
+        if a0.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Down, Qt.Key.Key_Up):
+            a0.ignore()
+            return
+
+        super().keyPressEvent(a0)
+
     def on_input_changed(self, inp: str):
         """Called when the text input is changed, spinning up a new thread to do the `rbw` query and update the results.
 
@@ -207,10 +221,6 @@ class SearchResults(QListWidget):
         self.__results: list[SearchResult] = []
         self.itemSelectionChanged.connect(self.selection_changed)
         self.sel_changed.connect(parent.on_selection_changed)
-
-    # TODO: Do I still need this? I think this is a stub that never ended up being necessary...
-    # def on_key_press(self, e: QtGui.QKeyEvent | None):
-    #     return
 
     def update_entries(self, results: list[BitwardenEntry]):
         self.clear()

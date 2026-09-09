@@ -17,6 +17,8 @@ class GlobalShowListener(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
 
+    def on_show(self):
+        """Used to allow platform-specific callbacks"""
 
 def get_global_show_listener(parent: QObject) -> GlobalShowListener:
     if IS_MAC:
