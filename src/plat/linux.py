@@ -18,9 +18,6 @@ HOTKEY_COMBOS: list[list[int]] = [
 ]
 
 
-print(HOTKEY_COMBOS)
-
-
 class LinuxPlatformHandler(PlatformHandler):
     """
     This class uses a DE/WM/Compositor agnostic approach to global
