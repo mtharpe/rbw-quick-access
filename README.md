@@ -54,7 +54,10 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 
 ## Linux
 
-`rbw`
+-   `rbw`
+-   Your local, non-root user must be part of the input group
+    -   `sudo usermod -aG input {YOUR_USER}`
+    -   Restart
 
 ## macOS
 
