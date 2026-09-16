@@ -24,7 +24,6 @@ sudo cp -a ./_internal "$INSTALL_DIR"
 sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access
 
 if command -v systemctl >/dev/null 2>&1; then
-# if [[ command -v systemctl ]]; then
     service="
 [Unit]
 Description=rbw quick access background service
@@ -46,6 +45,13 @@ WantedBy=default.target
     systemctl --user enable rbw-quick-access.service
     # Start the service for the user - use restart that way if it exists already, it works too.
     systemctl --user restart rbw-quick-access.service
+    # Check if we're already in the `input` user group
+    if [ -z "$(getent group | grep -i "$USER" | grep -i input)" ]; then
+        sudo usermod -aG input "$USER"
+        echo "User $USER has been added to the 'input' group - a system restart will be required!"
+    else
+        echo "rbw-quick-access has been installed/updated!"
+    fi
 else
     bash -c "nohup rbw-quick-access >/dev/null 2>&1  &"
 
