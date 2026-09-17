@@ -9,13 +9,29 @@ from evdev import InputDevice, KeyEvent, categorize, ecodes, list_devices
 from evdev.events import InputEvent
 from PyQt6.QtCore import QObject
 
+from config import Config, Keybind
 from plat import PlatformHandler
 
-# The global keybind (with variants) for Super+Shift+\
-# again, TODO: make this easily rebindable
-HOTKEY_COMBOS: list[list[int]] = [
-    sorted([meta, shift, ecodes.KEY_BACKSLASH]) for meta in [ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA] for shift in [ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT]
-]
+
+def keybind_to_ecode(binding: Keybind) -> list[list[int]]:
+    """Maps a given keybind to the ecode list equivalent
+        Returns a list of keybinds, since we want to consider
+        both left and right modifiers
+
+    Args:
+        binding (Keybind): The keybinding to map
+
+    Returns:
+        list[list[int]]: The fully filled set of modifiers
+    """
+    # Use [0] as a placeholder to filter out later - if we use an empty array the list comp below fails
+    ctrls = [ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL] if binding.ctrl else [0]
+    metas = [ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA] if binding.meta else [0]
+    shifts = [ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT] if binding.shift else [0]
+    alts = [ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT] if binding.alt else [0]
+    # Get comprehended idiot
+    comped = [[ctrl, meta, shift, alt, ord(binding.trigger.upper())] for ctrl in ctrls for alt in alts for meta in metas for shift in shifts]
+    return [sorted(filter(lambda x: x, d)) for d in comped]
 
 
 class LinuxPlatformHandler(PlatformHandler):
@@ -32,6 +48,8 @@ class LinuxPlatformHandler(PlatformHandler):
         super().__init__(parent)
         self._listener_threads: list[Thread] = []
         self.__start_threads()
+        self.__config = Config.load()
+        self.__hotkeys = keybind_to_ecode(self.__config.keybinds.show)
 
     def __start_threads(self):
         """Spins up a thread for each device listening to keybinds"""
@@ -83,5 +101,5 @@ class LinuxPlatformHandler(PlatformHandler):
                 continue
 
             combo = sorted(pressed)
-            if combo in HOTKEY_COMBOS:
+            if combo in self.__hotkeys:
                 self.on_show_signal.emit()

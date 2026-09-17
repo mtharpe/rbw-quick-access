@@ -6,7 +6,6 @@ from sys import platform
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-
 IS_MAC = platform == "darwin"
 IS_LINUX = platform == "linux"
 
