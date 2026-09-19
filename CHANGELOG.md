@@ -21,6 +21,8 @@ To keep things easy on me (since this is something you won't change often), modi
 ### Fixed
 
 -   If the window was already shown, but backgrounded, the show keybind wouldn't bring it back to the front.
+-   [macOS] Opening Quick Access while in a full-screen application would take you out of the fullscreen application to show
+-   [macOS] Exiting out of Quick Access wouldn't return focus to your previous window
 
 # 0.0.3
 

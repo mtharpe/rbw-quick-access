@@ -173,10 +173,10 @@ class MacOsPlatformHandler(PlatformHandler):
         return super().on_show()
 
     def on_hide(self):
-        if IS_MAC:
-            from AppKit import NSApplication  # type:ignore[import]
+        # if IS_MAC:
+        #     from AppKit import NSApplication  # type:ignore[import]
 
-            NSApplication.sharedApplication().deactivate()
+        # NSApplication.sharedApplication().deactivate()
         return super().on_hide()
 
     def validate(self, key: str) -> bool:
