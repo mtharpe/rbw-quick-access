@@ -8,7 +8,7 @@ import webbrowser
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
-from PyQt6.QtWidgets import QGridLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
 from config import Keybind, get_config
@@ -207,15 +207,13 @@ class SettingsWidget(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(custom_font)
 
-        self.btn = QPushButton("Save")
-        self.btn.clicked.connect(self.on_save_pressed)
-
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self.label)
 
-        grid = QGridLayout()
+        """REGION: Keybind Grid"""
+        keybind_grid = QGridLayout()
         # Go through each label and KeybindChanger and configure it into an evenly spaced grid
         for row, (label, editor) in enumerate(
             [
@@ -226,21 +224,31 @@ class SettingsWidget(QWidget):
                 ("Copy TOTP", KeybindEditor(self, self.__config.copy_totp, self.on_key_changed)),
             ]
         ):
-            grid.addWidget(QLabel(label), row, 0)
-            grid.addWidget(editor, row, 1)
-
+            keybind_grid.addWidget(QLabel(label), row, 0)
+            keybind_grid.addWidget(editor, row, 1)
         # Give both columns equal stretch
-        grid.setColumnStretch(0, 1)
-        grid.setColumnStretch(1, 1)
+        keybind_grid.setColumnStretch(0, 1)
+        keybind_grid.setColumnStretch(1, 1)
+        """ENDREGION: Keybind Grid"""
 
-        layout.addLayout(grid)
-        layout.addWidget(self.btn)
+        """REGION: Buttons"""
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(self.on_save_pressed)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.on_cancel_pressed)
 
+        btn_layout = QHBoxLayout()
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(cancel_btn)
+        """ENDREGION: Buttons"""
+
+        layout.addLayout(keybind_grid)
+        layout.addLayout(btn_layout)
         self.setLayout(layout)
         self.adjustSize()
         # Keeps the first KeybindChanger from stealing focus on open
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.hide()
+        # self.hide()
 
     def on_show_key_changed(self, seq: QKeySequence, kb: Keybind):
         """Called whenever the show key has been changed"""
@@ -265,3 +273,12 @@ class SettingsWidget(QWidget):
         if dlg.exec():
             self.__config.save()
             self.main_window.plat_handler.restart_app()
+
+    def on_cancel_pressed(self):
+        """Called when the cancel button has been pressed -- resets all changes"""
+        self.__config.show.restore()
+        self.__config.copy_username.restore()
+        self.__config.copy_password.restore()
+        self.__config.copy_totp.restore()
+        self.__config.open_in_browser.restore()
+        self.main_window.toggle_settings()

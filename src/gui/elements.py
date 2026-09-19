@@ -263,6 +263,7 @@ class KeybindEditor(QKeySequenceEdit):
         super().__init__(str(keybind), parent)
         self.__on_change = on_change
         self.__keybind = keybind
+        self.__keybind.on_restored.connect(self.__on_restored)
 
         # Debounce timer for the sequence change evt
         self.__pending_seq: QKeySequence | None = None
@@ -289,6 +290,10 @@ class KeybindEditor(QKeySequenceEdit):
         self.__on_change(self.__pending_seq, self.__keybind)
         self.__pending_seq = None
         self.clearFocus()
+
+    def __on_restored(self):
+        """Unsets whatever changes were made to this keybind"""
+        self.setKeySequence(QKeySequence.fromString(str(self.__keybind), format=QKeySequence.SequenceFormat.PortableText))
 
 
 class DismissableDialog(QDialog):

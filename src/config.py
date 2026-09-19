@@ -10,7 +10,7 @@ from os import makedirs
 from pathlib import Path
 
 from platformdirs import user_config_dir
-from PyQt6.QtCore import QKeyCombination
+from PyQt6.QtCore import QKeyCombination, QObject, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 
 CURRENT_VERSION = 1
@@ -22,15 +22,21 @@ if not Path(config_dir).exists():
     makedirs(config_dir)
 
 
-@dataclass
-class Keybind:
+class Keybind(QObject):
     """Defines a given trigger key and modifiers"""
 
-    trigger: str
-    ctrl: bool = False
-    alt: bool = False
-    meta: bool = False
-    shift: bool = False
+    # Called when restored so the config GUI updates
+    on_restored = pyqtSignal()
+
+    def __init__(self, trigger: str, ctrl: bool = False, alt: bool = False, meta: bool = False, shift: bool = False):
+        super().__init__()
+        self.trigger = trigger
+        self.ctrl = ctrl
+        self.alt = alt
+        self.meta = meta
+        self.shift = shift
+
+        self.original: Keybind | None = None
 
     @staticmethod
     def deserialize(text_repr: str) -> "Keybind":
@@ -78,6 +84,8 @@ class Keybind:
         Args:
             new_sequence (QKeySequence): The new keybind sequence
         """
+        # Make a full backup
+        self.original = Keybind.deserialize(str(self))
 
         # The QT key format here is.... weird. This was easiest.
         as_str = new_sequence.toString(QKeySequence.SequenceFormat.PortableText)
@@ -89,8 +97,18 @@ class Keybind:
         self.meta = new_kb.meta
         self.shift = new_kb.shift
 
-        # TODO: does this work? I think it will.
-        get_config().save()
+    def restore(self):
+        """Resets any changes to the keybind"""
+        if not self.original:
+            return
+
+        self.trigger = self.original.trigger
+        self.ctrl = self.original.ctrl
+        self.alt = self.original.alt
+        self.meta = self.original.meta
+        self.shift = self.original.shift
+        self.original = None
+        self.on_restored.emit()
 
     def __str__(self):
         """Creates a string repr of the keybind
@@ -137,6 +155,13 @@ class Config:
 
         with open(conf_path, "w", encoding="utf-8") as conf_fh:
             conf.write(conf_fh)
+
+        # Since we've saved, cancelling should remove the "originals"
+        self.show.original = None
+        self.copy_username.original = None
+        self.copy_password.original = None
+        self.copy_totp.original = None
+        self.open_in_browser.original = None
 
 
 CONFIG_INSTANCE: Config | None = None
