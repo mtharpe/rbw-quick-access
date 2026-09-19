@@ -1,17 +1,20 @@
 import webbrowser
+from collections.abc import Callable
 from threading import Thread
 from typing import cast
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QHideEvent, QKeyEvent, QShowEvent
+from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
+    QKeySequenceEdit,
     QLabel,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
+    QPushButton,
     QSizePolicy,
     QStyle,
     QStyledItemDelegate,
@@ -21,7 +24,7 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-from config import Config
+from config import Config, Keybind
 from plat import IS_MAC, get_platform_handler
 from rbw import BitwardenEntry
 
@@ -382,10 +385,79 @@ class HotkeyGuide(QWidget):
         return lbl
 
 
-class SettingsWidget(QWidget):
-    def __init__(self, parent: QWidget):
+class SettingsWidget(QMainWindow):
+    def __init__(self, parent: MainWindow):
         super().__init__(parent)
-        layout = QVBoxLayout()
+        self.__config = Config.load()
+
+        self.main_window = parent
         self.label = QLabel("Settings :)")
+        self.editors = [
+            KeybindChanger(
+                self,
+                "Copy Username",
+                self.__config.copy_username,
+                self.__config.save,
+            ),
+        ]
+
+        self.btn = QPushButton("Back")
+        self.btn.clicked.connect(self.hide)
+
+        layout = QVBoxLayout()
         layout.addWidget(self.label)
-        self.setLayout(layout)
+        layout.addWidget(self.btn)
+        [layout.addWidget(w) for w in self.editors]
+
+        layout_widget = QWidget()
+        layout_widget.setLayout(layout)
+        self.setCentralWidget(layout_widget)
+
+    def show(self):
+        super().show()
+
+        self.main_window.hide()
+        self.main_window.clearFocus()
+        self.setFocus()
+        self.raise_()
+
+    def hide(self):
+        super().hide()
+
+        self.clearFocus()
+        self.main_window.show()
+        self.main_window.setFocus()
+        self.main_window.raise_()
+
+
+class KeybindChanger(QWidget):
+    def __init__(self, parent: QWidget, label: str, keybind: Keybind):
+        """A super simple QWidget wrapper around a QKeySequenceEditor, which
+        adds a label, sets defaults on the KeySequenceEdit, and binds on_change
+
+        Args:
+            parent (QWidget): The parent to this widget
+            label (str): The label for the keybind editor
+            keybind (Keybind): The current keybind to read/set
+        """
+        super().__init__(parent)
+        self.config = Config.load()
+        self.__keybind = keybind
+
+        self.label = QLabel(label, self)
+        self.editor = QKeySequenceEdit(str(keybind), self)
+        self.editor.setClearButtonEnabled(True)
+        self.editor.keySequenceChanged.connect(self.on_change)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.editor)
+
+    def on_change(self, seq: QKeySequence):
+        """Triggered whenever the key sequence has been changed
+
+        Args:
+            seq (QKeySequence): The new key sequence to propagate
+        """
+        self.__keybind.set(seq)
+        self.config.save()

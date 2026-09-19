@@ -66,6 +66,26 @@ class Keybind:
         self_seq = QKeySequence.fromString(str(self), QKeySequence.SequenceFormat.PortableText)
         return self_seq.matches(QKeySequence(combo)) == QKeySequence.SequenceMatch.ExactMatch
 
+    def set(self, new_sequence: QKeySequence):
+        """Called when changed by the QT GUI
+
+        Args:
+            new_sequence (QKeySequence): The new keybind sequence
+        """
+
+        # The QT key format here is.... weird. This was easiest.
+        as_str = new_sequence.toString(QKeySequence.SequenceFormat.PortableText)
+        new_kb = Keybind.deserialize(as_str)
+
+        self.trigger = new_kb.trigger
+        self.ctrl = new_kb.ctrl
+        self.alt = new_kb.alt
+        self.meta = new_kb.meta
+        self.shift = new_kb.shift
+
+        # TODO: does this work? I think it will.
+        get_config().save()
+
     def __str__(self):
         """Creates a string repr of the keybind
 
@@ -149,3 +169,16 @@ class Config:
 
         with open(conf_path, "w", encoding="utf-8") as conf_fh:
             conf.write(conf_fh)
+
+
+CONFIG_INSTANCE: Config | None = None
+
+
+def get_config() -> Config:
+    """Gets the singleton config instance"""
+    global CONFIG_INSTANCE
+
+    if not CONFIG_INSTANCE:
+        CONFIG_INSTANCE = Config.load()
+
+    return CONFIG_INSTANCE
