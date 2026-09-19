@@ -8,11 +8,11 @@ import webbrowser
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
-from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QGridLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
 from config import Keybind, get_config
-from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindChanger, SearchBox, SearchResults, YesNoDialog
+from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindEditor, SearchBox, SearchResults, YesNoDialog
 from plat import get_platform_handler
 from rbw import BitwardenEntry
 
@@ -210,19 +210,30 @@ class SettingsWidget(QWidget):
         self.btn = QPushButton("Save")
         self.btn.clicked.connect(self.on_save_pressed)
 
-        self.editors = [
-            KeybindChanger(self, "Show Window", self.__config.show, self.on_show_key_changed),
-            KeybindChanger(self, "Open Item in Browser", self.__config.open_in_browser, self.on_key_changed),
-            KeybindChanger(self, "Copy Username", self.__config.copy_username, self.on_key_changed),
-            KeybindChanger(self, "Copy Password", self.__config.copy_password, self.on_key_changed),
-            KeybindChanger(self, "Copy TOTP", self.__config.copy_totp, self.on_key_changed),
-        ]
-
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self.label)
-        [layout.addWidget(w) for w in self.editors]
+
+        grid = QGridLayout()
+        # Go through each label and KeybindChanger and configure it into an evenly spaced grid
+        for row, (label, editor) in enumerate(
+            [
+                ("Show Window", KeybindEditor(self, self.__config.show, self.on_show_key_changed)),
+                ("Open Item in Browser", KeybindEditor(self, self.__config.open_in_browser, self.on_key_changed)),
+                ("Copy Username", KeybindEditor(self, self.__config.copy_username, self.on_key_changed)),
+                ("Copy Password", KeybindEditor(self, self.__config.copy_password, self.on_key_changed)),
+                ("Copy TOTP", KeybindEditor(self, self.__config.copy_totp, self.on_key_changed)),
+            ]
+        ):
+            grid.addWidget(QLabel(label), row, 0)
+            grid.addWidget(editor, row, 1)
+
+        # Give both columns equal stretch
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+
+        layout.addLayout(grid)
         layout.addWidget(self.btn)
 
         self.setLayout(layout)

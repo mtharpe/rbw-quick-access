@@ -249,17 +249,18 @@ class HotkeyGuide(QWidget):
         return lbl
 
 
-class KeybindChanger(QWidget):
-    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind], None]):
+class KeybindEditor(QKeySequenceEdit):
+    def __init__(self, parent: QWidget, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind], None]):
         """A super simple QWidget wrapper around a QKeySequenceEditor, which
         adds a label, sets defaults on the KeySequenceEdit, and binds on_change
 
         Args:
             parent (QWidget): The parent to this widget
-            label (str): The label for the keybind editor
             keybind (Keybind): The current keybind to read/set
+            on_change (Callable[[QKeySequence, Keybind], None]): The callback which provides
+              the keyseq and affected keybind when the keysequence is changed
         """
-        super().__init__(parent)
+        super().__init__(str(keybind), parent)
         self.__on_change = on_change
         self.__keybind = keybind
 
@@ -269,16 +270,9 @@ class KeybindChanger(QWidget):
         self.__change_timer.setSingleShot(True)
         self.__change_timer.timeout.connect(self.__commit_changed_keybind)
 
-        self.label = QLabel(label, self)
-        self.editor = QKeySequenceEdit(str(self.__keybind), self)
-        self.editor.setClearButtonEnabled(True)
-        self.editor.setMaximumSequenceLength(1)
-        self.editor.keySequenceChanged.connect(self.__on_change_internal)
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(self.label)
-        layout.addWidget(self.editor)
-        self.setLayout(layout)
+        self.setClearButtonEnabled(True)
+        self.setMaximumSequenceLength(1)
+        self.keySequenceChanged.connect(self.__on_change_internal)
 
     def __on_change_internal(self, sequence: QKeySequence):
         """An internal change handler to help debounce events"""
@@ -294,7 +288,7 @@ class KeybindChanger(QWidget):
 
         self.__on_change(self.__pending_seq, self.__keybind)
         self.__pending_seq = None
-        self.editor.clearFocus()
+        self.clearFocus()
 
 
 class DismissableDialog(QDialog):
