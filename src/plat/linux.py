@@ -80,7 +80,7 @@ class LinuxPlatformHandler(PlatformHandler):
         self._listener_threads: list[Thread] = []
         self.__start_threads()
         self.__config = Config.load()
-        self.__hotkeys = keybind_to_ecode(self.__config.keybinds.show)
+        self.__activators = keybind_to_ecode(self.__config.show)
 
     def __start_threads(self):
         """Spins up a thread for each device listening to keybinds"""
@@ -132,5 +132,5 @@ class LinuxPlatformHandler(PlatformHandler):
                 continue
 
             combo = sorted(pressed)
-            if combo in self.__hotkeys:
+            if combo in self.__activators:
                 self.on_show_signal.emit()

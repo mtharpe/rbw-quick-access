@@ -1,9 +1,8 @@
 import webbrowser
 from threading import Thread
-from typing import Tuple, cast
+from typing import cast
 
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import QByteArray, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QHideEvent, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
@@ -20,7 +19,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.sip import voidptr
 
 import rbw
 from config import Config
@@ -121,27 +119,24 @@ class MainWindow(QMainWindow):
                 bool: True if an action was taken (consuming the input), false otherwise
             """
 
-            key = a0.key()
-            mods = QtWidgets.QApplication.keyboardModifiers()
-
-            if self.__config.keybinds.open_in_browser.matches(key, mods):
+            if self.__config.open_in_browser.qt_matches(a0.keyCombination()):
                 if sel.uri:
                     webbrowser.open(sel.uri)
                 self.hide()
                 return True
 
-            if self.__config.keybinds.copy_username.matches(key, mods):
+            if self.__config.copy_username.qt_matches(a0.keyCombination()):
                 if sel.user:
                     rbw.copy_username(sel)
                 self.hide()
                 return True
 
-            if self.__config.keybinds.copy_password.matches(key, mods):
+            if self.__config.copy_password.qt_matches(a0.keyCombination()):
                 rbw.copy_password(sel)
                 self.hide()
                 return True
 
-            if self.__config.keybinds.copy_totp.matches(key, mods):
+            if self.__config.copy_totp.qt_matches(a0.keyCombination()):
                 rbw.copy_totp(sel)
                 self.hide()
                 return True
