@@ -9,6 +9,8 @@ from PyQt6.QtCore import QObject, pyqtSignal
 IS_MAC = platform == "darwin"
 IS_LINUX = platform == "linux"
 
+print(IS_MAC)
+
 
 class PlatformHandler(QObject):
     """A common Platform Handler superclass to be used for specific niche oddities (looking at you macOS)"""
