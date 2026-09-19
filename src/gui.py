@@ -34,23 +34,32 @@ class MainWindow(QMainWindow):
         self.__platform_handler = get_platform_handler(self)
         self.__platform_handler.on_show_signal.connect(self.show)
         self.__config = Config.load()
+        self.__settings_open = False
 
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
-        # The widgets above aren't using this window as the parent
-        #  Plus we want them in the box layout, so...
-        layout = QVBoxLayout()
-        layout.addWidget(self.search_widget)
-        layout.addWidget(self.results_widget)
-        layout.addWidget(HotkeyGuide())
+        # Init the primary sarch window layout -- this is the primary use-case
+        __primary_layout = QVBoxLayout()
+        __primary_layout.addWidget(self.search_widget)
+        __primary_layout.addWidget(self.results_widget)
+        __primary_layout.addWidget(HotkeyGuide())
+
+        self.primary_layout_widget = QWidget()
+        self.primary_layout_widget.setLayout(__primary_layout)
+
+        # Also init the settings window layout, which we'll swap in.
+        __settings_layout = QVBoxLayout()
+        __settings_layout.addWidget(SettingsWidget())
+
+        self.settings_layout_widget = QWidget()
+        self.settings_layout_widget.setLayout(__settings_layout)
 
         # On top of that, you can't set a layout on a QMainWindow.
         #  So this is the route around that. Not bad
-        layout_widget = QWidget()
-        layout_widget.setLayout(layout)
+
         self.search_widget.on_input_changed("")
-        self.setCentralWidget(layout_widget)
+        self.setCentralWidget(self.primary_layout_widget)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 
     def showEvent(self, a0: QShowEvent | None) -> None:
@@ -68,6 +77,15 @@ class MainWindow(QMainWindow):
         self.search_widget.setFocus()
         self.search_widget.selectAll()
         self.__platform_handler.on_show()
+
+    def toggle_settings(self) -> None:
+        """Shows (or hides) the settings widget"""
+        if self.__settings_open:
+            self.setCentralWidget(self.primary_layout_widget)
+        else:
+            self.setCentralWidget(self.settings_layout_widget)
+
+        self.__settings_open = not self.__settings_open
 
     def hideEvent(self, a0: QHideEvent | None) -> None:
         """Called when the QWidget is hidden. In this case, it's only used
@@ -95,6 +113,11 @@ class MainWindow(QMainWindow):
             Returns:
                 bool: True if an action was taken (consuming the input), false otherwise
             """
+
+            if a0.modifiers() == Qt.KeyboardModifier.MetaModifier and a0.key() == Qt.Key.Key_Comma:
+                self.toggle_settings()
+                return True
+
             if a0.key() == Qt.Key.Key_Escape:
                 self.hide()
                 return True
@@ -348,8 +371,6 @@ class HotkeyGuide(QWidget):
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
-
-        # TODO: Make it easy for users to pick this font in the future
         family = QFontInfo(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)).family()
 
         lbl = QLabel()
@@ -366,3 +387,11 @@ class HotkeyGuide(QWidget):
         &nbsp; {text}
         """)
         return lbl
+
+
+class SettingsWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel("Settings"))
+        self.setLayout(layout)

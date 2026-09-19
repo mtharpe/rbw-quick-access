@@ -1,3 +1,9 @@
+# 0.0.4
+
+## The Configuration Update!
+
+This was long overdue -- there's still not an in-application GUI for the config, but this is better than nothing for the time being. Upon updating, you'll find a new application 
+
 # 0.0.3
 
 This update was a huge pain and required me to buy a Mac just to get here. But! In exchange, you get a Mac port. 
