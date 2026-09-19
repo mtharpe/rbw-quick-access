@@ -6,12 +6,12 @@ The core GUI elements for the application
 
 import webbrowser
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QShowEvent
-from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
+from PyQt6.QtWidgets import QDialog, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
-from config import get_config
+from config import Keybind, get_config
 from gui.elements import DynamicStackedWidget, HotkeyGuide, KeybindChanger, SearchBox, SearchResults
 from plat import get_platform_handler
 from rbw import BitwardenEntry
@@ -22,10 +22,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
-        self.__platform_handler = get_platform_handler(self)
-        self.__platform_handler.on_show_signal.connect(self.show)
         self.__config = get_config()
         self.__settings_open = False
+
+        self.plat_handler = get_platform_handler(self)
+        self.plat_handler.on_show_signal.connect(self.show)
 
         # Dependent widgets for this class
         self.search_widget = SearchBox(self)
@@ -42,7 +43,6 @@ class MainWindow(QMainWindow):
         self.qa_view.setLayout(qa_layout)
 
         self.settings_view = SettingsWidget(self)
-        self.settings_view.config_changed.connect(self.__update_config)
 
         self.views = DynamicStackedWidget()
         self.views.addWidget(self.qa_view)
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         self.results_widget.unfocus()
         self.search_widget.setFocus()
         self.search_widget.selectAll()
-        self.__platform_handler.on_show()
+        self.plat_handler.on_show()
 
     def toggle_settings(self) -> None:
         """Shows (or hides) the settings widget"""
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         Args:a
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
-        self.__platform_handler.on_hide()
+        self.plat_handler.on_hide()
         return super().hideEvent(a0)
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
@@ -194,33 +194,28 @@ class MainWindow(QMainWindow):
         """
         self.__selection = selection
 
-    def __update_config(self):
-        """Called when the config has been updated"""
-        print("Config update signal received!")
-        self.__config = get_config()
-
 
 class SettingsWidget(QWidget):
-    config_changed = pyqtSignal()
-
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
+        self.main_window = parent
         self.__config = get_config()
 
-        self.label = QLabel("Settings")
         custom_font = QFont()
         custom_font.setPixelSize(24)
+        self.label = QLabel("Settings")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFont(custom_font)
-        self.btn = QPushButton("Back")
-        self.btn.clicked.connect(parent.toggle_settings)
+
+        self.btn = QPushButton("Save")
+        self.btn.clicked.connect(self.on_save_pressed)
 
         self.editors = [
-            KeybindChanger(self, "Show Window", self.__config.show, self.config_changed.emit),
-            KeybindChanger(self, "Open Item in Browser", self.__config.open_in_browser, self.config_changed.emit),
-            KeybindChanger(self, "Copy Username", self.__config.copy_username, self.config_changed.emit),
-            KeybindChanger(self, "Copy Password", self.__config.copy_password, self.config_changed.emit),
-            KeybindChanger(self, "Copy TOTP", self.__config.copy_totp, self.config_changed.emit),
+            KeybindChanger(self, "Show Window", self.__config.show, self.on_show_changed),
+            KeybindChanger(self, "Open Item in Browser", self.__config.open_in_browser, self.on_key_changed),
+            KeybindChanger(self, "Copy Username", self.__config.copy_username, self.on_key_changed),
+            KeybindChanger(self, "Copy Password", self.__config.copy_password, self.on_key_changed),
+            KeybindChanger(self, "Copy TOTP", self.__config.copy_totp, self.on_key_changed),
         ]
 
         layout = QVBoxLayout()
@@ -235,3 +230,28 @@ class SettingsWidget(QWidget):
         # Keeps the first KeybindChanger from stealing focus on open
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.hide()
+
+    def on_show_changed(self, seq: QKeySequence, kb: Keybind):
+        """Called whenever the show key has been changed"""
+        # TODO: Make the PlatformHandler class validate the keybind
+        valid = self.main_window.plat_handler.validate(seq)
+        if not valid:
+            # TODO: Visual Popup or propagate on keybind?
+            return
+
+        self.on_key_changed(seq, kb)
+
+    def on_key_changed(self, seq: QKeySequence, kb: Keybind):
+        """Called when any other key has been changed"""
+        kb.set(seq)
+
+    def on_save_pressed(self):
+        """Called when the Save button has been pressed"""
+        # self.main_window.toggle_settings()
+        # TODO: Popup Window
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Restart?")
+        dlg.exec()
+
+        self.__config.save()

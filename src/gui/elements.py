@@ -23,7 +23,6 @@ from PyQt6.QtWidgets import (
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -222,7 +221,6 @@ class HotkeyGuide(QWidget):
     def __init__(self):
         super().__init__()
         self.config = get_config()
-        # TODO: this doesn't update on keybind change
         layout = QHBoxLayout()
         layout.addWidget(self.__make_guide(str(self.config.copy_username), "Copy username"))
         layout.addWidget(self.__make_guide(str(self.config.copy_password), "Copy password"))
@@ -249,7 +247,7 @@ class HotkeyGuide(QWidget):
 
 
 class KeybindChanger(QWidget):
-    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable):
+    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind]]):
         """A super simple QWidget wrapper around a QKeySequenceEditor, which
         adds a label, sets defaults on the KeySequenceEdit, and binds on_change
 
@@ -259,22 +257,17 @@ class KeybindChanger(QWidget):
             keybind (Keybind): The current keybind to read/set
         """
         super().__init__(parent)
-        self.__keybind = keybind
-        self.__config = get_config()
         self.__on_change = on_change
+        self.__keybind = keybind
 
         self.label = QLabel(label, self)
-        self.editor = QKeySequenceEdit(str(keybind), self)
+        self.editor = QKeySequenceEdit(str(self.__keybind), self)
         self.editor.setClearButtonEnabled(True)
         self.editor.keySequenceChanged.connect(self.on_change)
 
-        # self.editor.setFixedWidth(256)
-
         layout = QHBoxLayout()
-
         layout.addWidget(self.label)
         layout.addWidget(self.editor)
-        # layout.addStretch()
         self.setLayout(layout)
 
     def on_change(self, seq: QKeySequence):
@@ -283,8 +276,5 @@ class KeybindChanger(QWidget):
         Args:
             seq (QKeySequence): The new key sequence to propagate
         """
-        # TODO: VALIDATE INPUT
         self.editor.clearFocus()
-        self.__keybind.set(seq)
-        self.__config.save()
-        self.__on_change()
+        self.__on_change(seq, self.__keybind)

@@ -2,9 +2,11 @@
 A global, cross-platform(ish) handler for tons of things.
 """
 
-from sys import platform
+from os import execv
+from sys import argv, executable, platform
 
 from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtGui import QKeySequence
 
 IS_MAC = platform == "darwin"
 IS_LINUX = platform == "linux"
@@ -23,6 +25,21 @@ class PlatformHandler(QObject):
 
     def on_hide(self):
         """Used to allow platform-specific callbacks on the hide event"""
+
+    def validate(self, seq: QKeySequence) -> bool:
+        """Validates a given key sequence to ensure that the key will work
+
+        Args:
+            seq (QKeySequence): The incoming key sequence
+
+        Returns:
+            bool: True if the key sequence is supported, false otherwise.
+        """
+        return False
+
+    def restart_app(self) -> None:
+        """Performs a full restart of the application. Impl allows each platform to do this differently if needed"""
+        execv(executable, [executable, *argv[1:]])
 
 
 def get_platform_handler(parent: QObject) -> PlatformHandler:
