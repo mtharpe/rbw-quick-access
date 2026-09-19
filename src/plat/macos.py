@@ -9,12 +9,12 @@ from platform import machine
 from typing import TYPE_CHECKING
 
 import quickmachotkey.constants as c  # type: ignore
-from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSWindowCollectionBehaviorCanJoinAllSpaces, NSWindowCollectionBehaviorFullScreenAuxiliary  # type: ignore
+from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSWindowCollectionBehaviorCanJoinAllSpaces, NSWindowCollectionBehaviorFullScreenAuxiliary, NSWorkspace  # type: ignore
 from objc import objc_object  # type: ignore
 from quickmachotkey import mask, quickHotKey  # type: ignore
 
 from config import get_config
-from plat import IS_MAC, PlatformHandler
+from plat import PlatformHandler
 
 if TYPE_CHECKING:
     from gui import MainWindow
@@ -148,6 +148,7 @@ class MacOsPlatformHandler(PlatformHandler):
         self.__app = NSApplication.sharedApplication()
         self.__app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
         self.__main_window = parent
+        self.__previous_app = None
 
         @quickHotKey(virtualKey=self.__get_virt_key(), modifierMask=mask(*self.__get_modifier_mask()))
         def show() -> None:
@@ -166,17 +167,23 @@ class MacOsPlatformHandler(PlatformHandler):
         window.setCollectionBehavior_(NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary)
 
     def on_show(self):
-        if IS_MAC:
-            from AppKit import NSApplication  # type:ignore[import]
+        """Grabs the previously active application and stores it for later"""
+        app = NSApplication.sharedApplication()
 
-            NSApplication.sharedApplication().activate()
+        if not app.isActive():
+            frontmost = NSWorkspace.sharedWorkspace().frontmostApplication()
+            # Frontmost can be falsy but None is the definitive answer here
+            if frontmost is not None:
+                self.__previous_app = frontmost
+
+        app.activate()
         return super().on_show()
 
     def on_hide(self):
-        # if IS_MAC:
-        #     from AppKit import NSApplication  # type:ignore[import]
-
-        # NSApplication.sharedApplication().deactivate()
+        """Restores focus to the previously focused application, if applicable"""
+        if self.__previous_app is not None:
+            self.__previous_app.activateWithOptions_(0)
+            self.__previous_app = None
         return super().on_hide()
 
     def validate(self, key: str) -> bool:
