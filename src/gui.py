@@ -39,27 +39,21 @@ class MainWindow(QMainWindow):
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
 
-        # Init the primary sarch window layout -- this is the primary use-case
-        __primary_layout = QVBoxLayout()
-        __primary_layout.addWidget(self.search_widget)
-        __primary_layout.addWidget(self.results_widget)
-        __primary_layout.addWidget(HotkeyGuide())
+        self.settings_widget = SettingsWidget(self)
 
-        self.primary_layout_widget = QWidget()
-        self.primary_layout_widget.setLayout(__primary_layout)
-
-        # Also init the settings window layout, which we'll swap in.
-        __settings_layout = QVBoxLayout()
-        __settings_layout.addWidget(SettingsWidget())
-
-        self.settings_layout_widget = QWidget()
-        self.settings_layout_widget.setLayout(__settings_layout)
+        # The widgets above aren't using this window as the parent
+        #  Plus we want them in the box layout, so...
+        layout = QVBoxLayout()
+        layout.addWidget(self.search_widget)
+        layout.addWidget(self.results_widget)
+        layout.addWidget(HotkeyGuide())
 
         # On top of that, you can't set a layout on a QMainWindow.
         #  So this is the route around that. Not bad
-
+        layout_widget = QWidget()
+        layout_widget.setLayout(layout)
         self.search_widget.on_input_changed("")
-        self.setCentralWidget(self.primary_layout_widget)
+        self.setCentralWidget(layout_widget)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
 
     def showEvent(self, a0: QShowEvent | None) -> None:
@@ -81,10 +75,9 @@ class MainWindow(QMainWindow):
     def toggle_settings(self) -> None:
         """Shows (or hides) the settings widget"""
         if self.__settings_open:
-            self.setCentralWidget(self.primary_layout_widget)
+            self.settings_widget.hide()
         else:
-            self.setCentralWidget(self.settings_layout_widget)
-
+            self.settings_widget.show()
         self.__settings_open = not self.__settings_open
 
     def hideEvent(self, a0: QHideEvent | None) -> None:
@@ -390,8 +383,9 @@ class HotkeyGuide(QWidget):
 
 
 class SettingsWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("Settings"))
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        layout = QVBoxLayout()
+        self.label = QLabel("Settings :)")
+        layout.addWidget(self.label)
         self.setLayout(layout)
