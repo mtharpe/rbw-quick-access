@@ -7,10 +7,10 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 from pathlib import Path
 from platform import machine
 
-import quickmachotkey.constants as c
+import quickmachotkey.constants as c  # type: ignore
 from AppKit import NSApplication, NSApplicationActivationPolicyAccessory  # type: ignore
 from PyQt6.QtCore import QObject
-from quickmachotkey import mask, quickHotKey
+from quickmachotkey import mask, quickHotKey  # type: ignore
 
 from config import get_config
 from plat import IS_MAC, PlatformHandler
@@ -164,6 +164,10 @@ class MacOsPlatformHandler(PlatformHandler):
 
             NSApplication.sharedApplication().deactivate()
         return super().on_hide()
+
+    def validate(self, key: str) -> bool:
+        """Even easier since the mapper has already made our lives miserable enough"""
+        return key in MISERABLE_MAPPER
 
     def __get_virt_key(self) -> c.VirtualKey:
         """Gets the virtual key corresponding to the key trigger"""

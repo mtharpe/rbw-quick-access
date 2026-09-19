@@ -8,10 +8,12 @@ from collections.abc import Callable
 from threading import Thread
 from typing import TYPE_CHECKING, cast
 
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
+    QDialog,
+    QDialogButtonBox,
     QHBoxLayout,
     QKeySequenceEdit,
     QLabel,
@@ -23,6 +25,7 @@ from PyQt6.QtWidgets import (
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -247,7 +250,7 @@ class HotkeyGuide(QWidget):
 
 
 class KeybindChanger(QWidget):
-    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind]]):
+    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind], None]):
         """A super simple QWidget wrapper around a QKeySequenceEditor, which
         adds a label, sets defaults on the KeySequenceEdit, and binds on_change
 
@@ -260,21 +263,51 @@ class KeybindChanger(QWidget):
         self.__on_change = on_change
         self.__keybind = keybind
 
+        # Debounce timer for the sequence change evt
+        self.__pending_seq: QKeySequence | None = None
+        self.__change_timer = QTimer(self)
+        self.__change_timer.setSingleShot(True)
+        self.__change_timer.timeout.connect(self.__commit_changed_keybind)
+
         self.label = QLabel(label, self)
         self.editor = QKeySequenceEdit(str(self.__keybind), self)
         self.editor.setClearButtonEnabled(True)
-        self.editor.keySequenceChanged.connect(self.on_change)
+        self.editor.setMaximumSequenceLength(1)
+        self.editor.keySequenceChanged.connect(self.__on_change_internal)
 
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
         layout.addWidget(self.label)
         layout.addWidget(self.editor)
         self.setLayout(layout)
 
-    def on_change(self, seq: QKeySequence):
-        """Triggered whenever the key sequence has been changed
+    def __on_change_internal(self, sequence: QKeySequence):
+        """An internal change handler to help debounce events"""
+        if self.__pending_seq:
+            return
+        self.__pending_seq = sequence
+        self.__change_timer.start(50)
 
-        Args:
-            seq (QKeySequence): The new key sequence to propagate
-        """
+    def __commit_changed_keybind(self):
+        """The actual handler for changed keybinds, debounced"""
+        if not self.__pending_seq or self.__pending_seq.isEmpty():
+            return
+
+        self.__on_change(self.__pending_seq, self.__keybind)
+        self.__pending_seq = None
         self.editor.clearFocus()
-        self.__on_change(seq, self.__keybind)
+
+
+class DismissableDialog(QDialog):
+    def __init__(self, parent: QWidget, title: str, msg: str):
+        super().__init__(parent)
+
+        self.setWindowTitle(title)
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
+        self.buttonBox.accepted.connect(self.accept)
+
+        msg_lbl = QLabel(msg)
+        layout = QVBoxLayout()
+        layout.addWidget(msg_lbl)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)

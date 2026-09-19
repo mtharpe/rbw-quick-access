@@ -6,7 +6,6 @@ from os import execv
 from sys import argv, executable, platform
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtGui import QKeySequence
 
 IS_MAC = platform == "darwin"
 IS_LINUX = platform == "linux"
@@ -26,14 +25,14 @@ class PlatformHandler(QObject):
     def on_hide(self):
         """Used to allow platform-specific callbacks on the hide event"""
 
-    def validate(self, seq: QKeySequence) -> bool:
+    def validate(self, key: str) -> bool:
         """Validates a given key sequence to ensure that the key will work
 
         Args:
-            seq (QKeySequence): The incoming key sequence
+            key (str): The incoming key (without modifiers)
 
         Returns:
-            bool: True if the key sequence is supported, false otherwise.
+            bool: True if the key is supported, false otherwise.
         """
         return False
 

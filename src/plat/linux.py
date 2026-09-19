@@ -77,10 +77,15 @@ class LinuxPlatformHandler(PlatformHandler):
 
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
-        self._listener_threads: list[Thread] = []
-        self.__start_threads()
         self.__config = get_config()
         self.__activators = keybind_to_ecode(self.__config.show)
+        # ALWAYS START THESE LAST IDIOT -- definitely didn't move this...
+        self._listener_threads: list[Thread] = []
+        self.__start_threads()
+
+    def validate(self, key: str) -> bool:
+        """Confirms that the key is valid using our custom evdev names or existing ecodes"""
+        return key in EVDEV_NAMES or f"KEY_{key.upper}" in ecodes.ecodes
 
     def __start_threads(self):
         """Spins up a thread for each device listening to keybinds"""
