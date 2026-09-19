@@ -117,44 +117,6 @@ class Config:
     copy_totp: Keybind
     open_in_browser: Keybind
 
-    @staticmethod
-    def load() -> "Config":
-        """Loads the config from the disk
-
-        Returns:
-            Config: The loaded config (or default)
-        """
-
-        # Create the default, save and return it
-        if not conf_path.exists():
-            conf = Config(
-                version=CURRENT_VERSION,
-                show=Keybind.deserialize("Meta+Shift+\\"),
-                copy_username=Keybind.deserialize("Ctrl+C"),
-                copy_password=Keybind.deserialize("Ctrl+Shift+C"),
-                copy_totp=Keybind.deserialize("Alt+Shift+C"),
-                open_in_browser=Keybind.deserialize("Enter"),
-            )
-            conf.save()
-            return conf
-
-        conf = configparser.ConfigParser()
-        conf.read(conf_path)
-
-        loaded = Config(
-            version=conf.getint("general", "version"),
-            show=Keybind.deserialize(conf.get("keybinds", "show")),
-            copy_username=Keybind.deserialize(conf.get("keybinds", "copy_username")),
-            copy_password=Keybind.deserialize(conf.get("keybinds", "copy_password")),
-            copy_totp=Keybind.deserialize(conf.get("keybinds", "copy_totp")),
-            open_in_browser=Keybind.deserialize(conf.get("keybinds", "open_in_browser")),
-        )
-
-        if loaded.version != CURRENT_VERSION:
-            print("HANDLE ME! I'm the wrong version")
-
-        return loaded
-
     def save(self):
         """Persists the current config state to disc"""
         conf = configparser.ConfigParser()
@@ -175,10 +137,36 @@ CONFIG_INSTANCE: Config | None = None
 
 
 def get_config() -> Config:
-    """Gets the singleton config instance"""
+    """Gets the singleton config instance. If it doesn't exist yet, it's loaded"""
     global CONFIG_INSTANCE
 
     if not CONFIG_INSTANCE:
-        CONFIG_INSTANCE = Config.load()
+        # Create the default, save and return it
+        if not conf_path.exists():
+            CONFIG_INSTANCE = Config(
+                version=CURRENT_VERSION,
+                show=Keybind.deserialize("Meta+Shift+\\"),
+                copy_username=Keybind.deserialize("Ctrl+C"),
+                copy_password=Keybind.deserialize("Ctrl+Shift+C"),
+                copy_totp=Keybind.deserialize("Alt+Shift+C"),
+                open_in_browser=Keybind.deserialize("Enter"),
+            )
+            CONFIG_INSTANCE.save()
+
+        else:
+            parser = configparser.ConfigParser()
+            parser.read(conf_path)
+
+            CONFIG_INSTANCE = Config(
+                version=parser.getint("general", "version"),
+                show=Keybind.deserialize(parser.get("keybinds", "show")),
+                copy_username=Keybind.deserialize(parser.get("keybinds", "copy_username")),
+                copy_password=Keybind.deserialize(parser.get("keybinds", "copy_password")),
+                copy_totp=Keybind.deserialize(parser.get("keybinds", "copy_totp")),
+                open_in_browser=Keybind.deserialize(parser.get("keybinds", "open_in_browser")),
+            )
+
+            if CONFIG_INSTANCE.version != CURRENT_VERSION:
+                print("HANDLE ME! I'm the wrong version")
 
     return CONFIG_INSTANCE

@@ -12,7 +12,7 @@ from AppKit import NSApplication, NSApplicationActivationPolicyAccessory  # type
 from PyQt6.QtCore import QObject
 from quickmachotkey import mask, quickHotKey
 
-from config import Config
+from config import get_config
 from plat import IS_MAC, PlatformHandler
 
 # This thing fucking sucks. I hate keybinds.
@@ -140,7 +140,7 @@ class MacOsPlatformHandler(PlatformHandler):
 
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
-        self.__config = Config.load()
+        self.__config = get_config()
         self.__app = NSApplication.sharedApplication()
         self.__app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
 

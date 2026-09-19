@@ -9,7 +9,7 @@ from evdev import InputDevice, KeyEvent, categorize, ecodes, list_devices
 from evdev.events import InputEvent
 from PyQt6.QtCore import QObject
 
-from config import Config, Keybind
+from config import Keybind, get_config
 from plat import PlatformHandler
 
 # Custom translation layer for canonical name to evdev name
@@ -79,7 +79,7 @@ class LinuxPlatformHandler(PlatformHandler):
         super().__init__(parent)
         self._listener_threads: list[Thread] = []
         self.__start_threads()
-        self.__config = Config.load()
+        self.__config = get_config()
         self.__activators = keybind_to_ecode(self.__config.show)
 
     def __start_threads(self):

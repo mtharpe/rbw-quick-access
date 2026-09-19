@@ -1,5 +1,4 @@
 import webbrowser
-from collections.abc import Callable
 from threading import Thread
 from typing import cast
 
@@ -24,8 +23,8 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-from config import Config, Keybind
-from plat import IS_MAC, get_platform_handler
+from config import Keybind, get_config
+from plat import get_platform_handler
 from rbw import BitwardenEntry
 
 
@@ -36,7 +35,7 @@ class MainWindow(QMainWindow):
         self.__selection: BitwardenEntry | None = None
         self.__platform_handler = get_platform_handler(self)
         self.__platform_handler.on_show_signal.connect(self.show)
-        self.__config = Config.load()
+        self.__config = get_config()
         self.__settings_open = False
 
         self.search_widget = SearchBox(self)
@@ -356,14 +355,12 @@ class SearchResult(QListWidgetItem):
 class HotkeyGuide(QWidget):
     def __init__(self):
         super().__init__()
-
-        ctrl = "Cmd" if IS_MAC else "Ctrl"
-        alt = "Opt" if IS_MAC else "Alt"
-
+        self.config = get_config()
+        # TODO: this doesn't update on keybind change
         layout = QHBoxLayout()
-        layout.addWidget(self.__make_guide(f"{ctrl}+C", "Copy username"))
-        layout.addWidget(self.__make_guide(f"{ctrl}+Shift+C", "Copy password"))
-        layout.addWidget(self.__make_guide(f"{alt}+Shift+C", "Copy totp"))
+        layout.addWidget(self.__make_guide(str(self.config.copy_username), "Copy username"))
+        layout.addWidget(self.__make_guide(str(self.config.copy_password), "Copy password"))
+        layout.addWidget(self.__make_guide(str(self.config.copy_totp), "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
@@ -388,17 +385,12 @@ class HotkeyGuide(QWidget):
 class SettingsWidget(QMainWindow):
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
-        self.__config = Config.load()
+        self.__config = get_config()
 
         self.main_window = parent
         self.label = QLabel("Settings :)")
         self.editors = [
-            KeybindChanger(
-                self,
-                "Copy Username",
-                self.__config.copy_username,
-                self.__config.save,
-            ),
+            KeybindChanger(self, "Copy Username", self.__config.copy_username),
         ]
 
         self.btn = QPushButton("Back")
@@ -411,6 +403,7 @@ class SettingsWidget(QMainWindow):
 
         layout_widget = QWidget()
         layout_widget.setLayout(layout)
+        # self.setFixedSize(layout_widget.sizeHint())
         self.setCentralWidget(layout_widget)
 
     def show(self):
@@ -441,8 +434,8 @@ class KeybindChanger(QWidget):
             keybind (Keybind): The current keybind to read/set
         """
         super().__init__(parent)
-        self.config = Config.load()
         self.__keybind = keybind
+        self.__config = get_config()
 
         self.label = QLabel(label, self)
         self.editor = QKeySequenceEdit(str(keybind), self)
@@ -460,4 +453,4 @@ class KeybindChanger(QWidget):
             seq (QKeySequence): The new key sequence to propagate
         """
         self.__keybind.set(seq)
-        self.config.save()
+        self.__config.save()
