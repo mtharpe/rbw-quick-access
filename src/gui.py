@@ -1,9 +1,9 @@
 import webbrowser
 from threading import Thread
-from typing import cast
+from typing import Tuple, cast
 
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QByteArray, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QHideEvent, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import (
     QApplication,
@@ -20,8 +20,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PyQt6.sip import voidptr
 
 import rbw
+from config import Config
 from plat import IS_MAC, get_platform_handler
 from rbw import BitwardenEntry
 
@@ -33,6 +35,7 @@ class MainWindow(QMainWindow):
         self.__selection: BitwardenEntry | None = None
         self.__platform_handler = get_platform_handler(self)
         self.__platform_handler.on_show_signal.connect(self.show)
+        self.__config = Config.load()
 
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
@@ -117,28 +120,28 @@ class MainWindow(QMainWindow):
             Returns:
                 bool: True if an action was taken (consuming the input), false otherwise
             """
-            if a0.key() in [Qt.Key.Key_Enter, Qt.Key.Key_Return] and sel.uri:
-                webbrowser.open(sel.uri)
+
+            key = a0.key()
+            mods = QtWidgets.QApplication.keyboardModifiers()
+
+            if self.__config.keybinds.open_in_browser.matches(key, mods):
+                if sel.uri:
+                    webbrowser.open(sel.uri)
                 self.hide()
                 return True
 
-            # At this point if we're not holding the C key, it doesn't matter
-            if a0.key() != Qt.Key.Key_C:
-                return False
-
-            modifiers = QtWidgets.QApplication.keyboardModifiers()
-
-            if sel.user and modifiers == Qt.KeyboardModifier.ControlModifier:
-                rbw.copy_username(sel)
+            if self.__config.keybinds.copy_username.matches(key, mods):
+                if sel.user:
+                    rbw.copy_username(sel)
                 self.hide()
                 return True
 
-            if modifiers == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
+            if self.__config.keybinds.copy_password.matches(key, mods):
                 rbw.copy_password(sel)
                 self.hide()
                 return True
 
-            if modifiers == (Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ShiftModifier):
+            if self.__config.keybinds.copy_totp.matches(key, mods):
                 rbw.copy_totp(sel)
                 self.hide()
                 return True

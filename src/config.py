@@ -1,16 +1,18 @@
 """
 @author Jose Stovall | oitsjustjose
-A naive approach to config handling -- config versions aren't really handled,
-    we'll just be sure to make configs backwards compatible. Or migrate them?
+A naive approach to config handling with versioning -- ish?
 """
 
 import json
 from dataclasses import dataclass
 from os import makedirs
 from pathlib import Path
-from types import SimpleNamespace
 
+from dataclass_wizard import JSONWizard
 from platformdirs import user_config_dir
+from PyQt6.QtCore import Qt
+
+CURRENT_VERSION = 1
 
 config_dir = user_config_dir("rbw-quick-access")
 conf_path = Path(config_dir).joinpath("rbw-quick-access.json").resolve()
@@ -20,7 +22,7 @@ if not Path(config_dir).exists():
 
 
 @dataclass
-class Keybind:
+class Keybind(JSONWizard):
     """Defines a given trigger key and modifiers"""
 
     trigger: str
@@ -29,9 +31,82 @@ class Keybind:
     meta: bool = False
     shift: bool = False
 
+    @staticmethod
+    def from_text(text_repr: str) -> "Keybind":
+        """Converts a text-based shortcut (like "Ctrl+A") into
+        a proper Keybind entry
+
+        Args:
+            text_repr (str): The text representation, as obtained by ::to_text
+
+        Returns:
+            Keybind: The built keybind
+        """
+        parts = text_repr.lower().split("+")
+
+        ctrl = "ctrl" in parts
+        alt = "alt" in parts
+        meta = "meta" in parts
+        shift = "shift" in parts
+        trigger = parts[-1]
+
+        return Keybind(
+            trigger,
+            ctrl=ctrl,
+            alt=alt,
+            meta=meta,
+            shift=shift,
+        )
+
+    def to_text(self) -> str:
+        """Creates a string repr of the keybind
+
+        Returns:
+            str: A string repr of the keybind, compatible as an input to Keybind::from_text
+        """
+
+        return "+".join(
+            filter(
+                bool,
+                [
+                    "Ctrl" if self.ctrl else "",
+                    "Alt" if self.alt else "",
+                    "Meta" if self.meta else "",
+                    "Shift" if self.shift else "",
+                    self.trigger,
+                ],
+            )
+        )
+
+    def matches(self, keycode: int, mods: Qt.KeyboardModifier) -> bool:
+        """Determines if the incoming key and modifiers match this one
+
+        Args:
+            key (Qt.Key): The main key pressed (matches to `ord(self.trigger.upper()`) usually)
+            mods (Qt.KeyboardModifier): The modifiers that were pressed at the time
+
+        Returns:
+            bool: True if the key and mods match
+        """
+
+        if self.trigger != keycode:
+            return False
+
+        modifiers = Qt.KeyboardModifier.NoModifier
+        if self.ctrl:
+            modifiers |= Qt.KeyboardModifier.ControlModifier
+        if self.alt:
+            modifiers |= Qt.KeyboardModifier.AltModifier
+        if self.meta:
+            modifiers |= Qt.KeyboardModifier.MetaModifier
+        if self.shift:
+            modifiers |= Qt.KeyboardModifier.ShiftModifier
+
+        return mods == modifiers
+
 
 @dataclass
-class Keybinds:
+class Keybinds(JSONWizard):
     """Defines the full set of keybinds for the application"""
 
     # The keybind which controls showing the app
@@ -44,8 +119,9 @@ class Keybinds:
 
 
 @dataclass
-class Config:
+class Config(JSONWizard):
     keybinds: Keybinds
+    version: int = 0
     # TODO: Theme
 
     def save(self) -> bool:
@@ -56,7 +132,7 @@ class Config:
         """
         try:
             with open(conf_path, "w", encoding="utf-8") as conf_fh:
-                conf_fh.write(json.dumps(self, indent=2))
+                conf_fh.write(json.dumps(self.to_dict(), indent=2))
         except Exception as e:  # noqa: BLE001
             print(e)
             return False
@@ -75,20 +151,20 @@ class Config:
 
         if not conf_path.exists():
             keybinds = Keybinds(
-                show=Keybind(meta=True, shift=True, trigger="\\"),
-                copy_username=Keybind(ctrl=True, trigger="C"),
-                copy_password=Keybind(ctrl=True, shift=True, trigger="C"),
-                copy_totp=Keybind(alt=True, shift=True, trigger="C"),
-                open_in_browser=Keybind(trigger="Enter"),
+                show=Keybind.from_text("Meta+Shift+\\"),
+                copy_username=Keybind.from_text("Ctrl+C"),
+                copy_password=Keybind.from_text("Ctrl+Shift+C"),
+                copy_totp=Keybind.from_text("Alt+Shift+C"),
+                open_in_browser=Keybind.from_text("Enter"),
             )
-            new_conf = Config(keybinds=keybinds)
+            new_conf = Config(version=CURRENT_VERSION, keybinds=keybinds)
             new_conf.save()
             return new_conf
 
         with open(conf_path, "r", encoding="utf-8") as conf_fh:
-            data: Config = json.loads(
-                conf_fh.read(),
-                object_hook=lambda d: SimpleNamespace(**d),
-            )
+            config = Config.from_dict(json.loads(conf_fh.read()))
 
-        return data
+        if config.version != CURRENT_VERSION:
+            print(f"Config version is {config.version} - not {CURRENT_VERSION} -- need to migrate it!")
+
+        return config

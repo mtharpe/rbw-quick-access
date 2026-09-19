@@ -9,6 +9,7 @@ from platform import machine
 
 from PyQt6.QtCore import QObject
 
+from config import Config
 from plat import IS_MAC, PlatformHandler
 
 
@@ -39,14 +40,14 @@ def resolve_macos_rbw() -> str:
     raise Exception(f"Failed to find a valid `rbw` binary!! Checked {dev_build} and {release_build}")  # noqa: TRY002
 
 
-# TODO: make this super easy to rebind
-#  Probably either (a) a binding of user-key to qmhk.constants.*key, or
-#                  (b) maybe something exists to get the same key value?
 class MacOsPlatformHandler(PlatformHandler):
     """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
 
     def __init__(self, parent: QObject | None) -> None:
         super().__init__(parent)
+        self.__config = Config.load()
+
+        # TODO: dynamic virtualKey and modifierMask
 
         if IS_MAC:  # TODO: is this necessary?
             from AppKit import NSApplication, NSApplicationActivationPolicyAccessory  # type: ignore

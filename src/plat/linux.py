@@ -12,6 +12,26 @@ from PyQt6.QtCore import QObject
 from config import Config, Keybind
 from plat import PlatformHandler
 
+# Custom translation layer for canonical name to evdev name
+EVDEV_NAMES = {
+    "Enter": ecodes.KEY_ENTER,
+    "Escape": ecodes.KEY_ESC,
+    "Space": ecodes.KEY_SPACE,
+    "Tab": ecodes.KEY_TAB,
+    "Backspace": ecodes.KEY_BACKSPACE,
+    "Delete": ecodes.KEY_DELETE,
+    "Insert": ecodes.KEY_INSERT,
+    "Home": ecodes.KEY_HOME,
+    "End": ecodes.KEY_END,
+    "PageUp": ecodes.KEY_PAGEUP,
+    "PageDown": ecodes.KEY_PAGEDOWN,
+    "Left": ecodes.KEY_LEFT,
+    "Right": ecodes.KEY_RIGHT,
+    "Up": ecodes.KEY_UP,
+    "Down": ecodes.KEY_DOWN,
+    "\\": ecodes.KEY_BACKSLASH,
+}
+
 
 def keybind_to_ecode(binding: Keybind) -> list[list[int]]:
     """Maps a given keybind to the ecode list equivalent
@@ -24,13 +44,24 @@ def keybind_to_ecode(binding: Keybind) -> list[list[int]]:
     Returns:
         list[list[int]]: The fully filled set of modifiers
     """
+
+    def __to_evdev(key: str) -> int:
+        if key in EVDEV_NAMES:
+            return EVDEV_NAMES[key]
+
+        try:
+            return ecodes.ecodes[f"KEY_{key.upper}"]
+        except KeyError:
+            raise ValueError(f"Unsupported evdev key: {key}")
+
     # Use [0] as a placeholder to filter out later - if we use an empty array the list comp below fails
     ctrls = [ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL] if binding.ctrl else [0]
     metas = [ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA] if binding.meta else [0]
     shifts = [ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT] if binding.shift else [0]
     alts = [ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT] if binding.alt else [0]
+    keycode = __to_evdev(binding.trigger)
     # Get comprehended idiot
-    comped = [[ctrl, meta, shift, alt, ord(binding.trigger.upper())] for ctrl in ctrls for alt in alts for meta in metas for shift in shifts]
+    comped = [[ctrl, meta, shift, alt, keycode] for ctrl in ctrls for alt in alts for meta in metas for shift in shifts]
     return [sorted(filter(lambda x: x, d)) for d in comped]
 
 
