@@ -284,7 +284,7 @@ class KeybindEditor(QKeySequenceEdit):
 
     def __commit_changed_keybind(self):
         """The actual handler for changed keybinds, debounced"""
-        if not self.__pending_seq or self.__pending_seq.isEmpty():
+        if not self.__pending_seq:
             return
 
         self.__on_change(self.__pending_seq, self.__keybind)

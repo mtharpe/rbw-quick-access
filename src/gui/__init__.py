@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
                 bool: True if an action was taken (consuming the input), false otherwise
             """
 
-            if a0.modifiers() == Qt.KeyboardModifier.MetaModifier and a0.key() == Qt.Key.Key_Comma:
+            if a0.modifiers() == Qt.KeyboardModifier.ControlModifier and a0.key() == Qt.Key.Key_Comma:
                 self.toggle_settings()
                 return True
 
