@@ -30,7 +30,7 @@ sudo cp -a ./rbw/rbw /usr/local/bin/
 sudo cp -a ./rbw/rbw-agent /usr/local/bin/
 
 # Finally make a symlink to the `/opt` exec in /usr/local/bin
-sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access
+sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access|
 
 read -p "Should rbw-quick-access start on login? y/n" -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]; then

@@ -4,13 +4,16 @@ Various linux-specific handlers and helpers.
 """
 
 from threading import Thread
+from typing import TYPE_CHECKING
 
 from evdev import InputDevice, KeyEvent, categorize, ecodes, list_devices
 from evdev.events import InputEvent
-from PyQt6.QtCore import QObject
 
 from config import Keybind, get_config
 from plat import PlatformHandler
+
+if TYPE_CHECKING:
+    from gui import MainWindow
 
 # Custom translation layer for canonical name to evdev name
 EVDEV_NAMES = {
@@ -75,7 +78,7 @@ class LinuxPlatformHandler(PlatformHandler):
     DE events or the xdg-platform nonsense which often doesn't work.
     """
 
-    def __init__(self, parent: QObject | None) -> None:
+    def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
         self.__config = get_config()
         self.__activators = keybind_to_ecode(self.__config.show)

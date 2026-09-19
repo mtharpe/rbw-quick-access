@@ -2,7 +2,25 @@
 
 ## The Configuration Update!
 
-This was long overdue -- there's still not an in-application GUI for the config, but this is better than nothing for the time being. Upon updating, you'll find a new application 
+This was long overdue -- there's still not an in-application GUI for the config, but this is better than nothing for the time being. After updating, you'll be able to hit <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>+<kbd>,</kbd> for macOS users) to open the settings window.
+
+To keep things easy on me (since this is something you won't change often), modifying the keybinds will require an application restart.
+
+**Known Bug**: For whatever reason, QT (the GUI backend for `rbw-quick-access`) doesn't allow you to just use a single key as a keybind. The application will let you set the keybind for copying something to, say, <kbd>A</kbd>, but it won't work.
+
+### Added
+
+-   Ability to modify the keybinds for:
+    -   Showing the application
+    -   Opening the URL for a given entry
+    -   Copying the Username for a given entry
+    -   Copying the Password for a given entry
+    -   Copying the TOTP for a given entry
+-   Configuration file at `%user_config_dir%/rbw-quick-access/config`
+
+### Fixed
+
+-   If the window was already shown, but backgrounded, the show keybind wouldn't bring it back to the front.
 
 # 0.0.3
 

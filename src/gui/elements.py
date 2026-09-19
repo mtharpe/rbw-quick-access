@@ -79,7 +79,13 @@ class SearchBox(QLineEdit):
         if not a0:
             return
 
+        # Handlers for hiding and moving into/out of the search box
         if a0.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Down, Qt.Key.Key_Up):
+            a0.ignore()
+            return
+
+        # Settings window handler
+        if a0.modifiers() == Qt.KeyboardModifier.ControlModifier and a0.key() == Qt.Key.Key_Comma:
             a0.ignore()
             return
 

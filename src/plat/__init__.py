@@ -4,8 +4,12 @@ A global, cross-platform(ish) handler for tons of things.
 
 import sys
 from os import execv
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, pyqtSignal
+
+if TYPE_CHECKING:
+    from gui import MainWindow
 
 IS_MAC = sys.platform == "darwin"
 IS_LINUX = sys.platform == "linux"
@@ -16,7 +20,7 @@ class PlatformHandler(QObject):
 
     on_show_signal = pyqtSignal()
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
 
     def on_show(self):
@@ -36,6 +40,9 @@ class PlatformHandler(QObject):
         """
         return False
 
+    def configure_window(self):
+        """Optional window configuration for the given application"""
+
     def restart_app(self) -> None:
         """Performs a full restart of the application. Impl allows each platform to do this differently if needed"""
 
@@ -47,7 +54,7 @@ class PlatformHandler(QObject):
         execv(sys.executable, [sys.executable, *args])
 
 
-def get_platform_handler(parent: QObject) -> PlatformHandler:
+def get_platform_handler(parent: "MainWindow") -> PlatformHandler:
     if IS_MAC:
         from plat.macos import MacOsPlatformHandler
 
@@ -56,4 +63,4 @@ def get_platform_handler(parent: QObject) -> PlatformHandler:
         from plat.linux import LinuxPlatformHandler
 
         return LinuxPlatformHandler(parent)
-    return PlatformHandler()
+    return PlatformHandler(parent)

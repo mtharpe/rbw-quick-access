@@ -7,7 +7,7 @@ The core GUI elements for the application
 import webbrowser
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
+from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.__settings_open = False
 
         self.plat_handler = get_platform_handler(self)
-        self.plat_handler.on_show_signal.connect(self.show)
+        self.plat_handler.on_show_signal.connect(self.show_and_activate)
 
         # Dependent widgets for this class
         self.search_widget = SearchBox(self)
@@ -54,25 +54,26 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.views)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.resize(self.width(), qa_layout.sizeHint().height())
+        # Wait to configure the window until other QT configuration has been completed
+        self.plat_handler.configure_window()
 
-    def showEvent(self, a0: QShowEvent | None) -> None:
-        """Called when the QWidget is shown. In this case, it's used to pre-propagate
-        the search results with the results from an empty string search
-
-        Args:a
-            a0 (QShowEvent | None): The event in (unused - passed to super)
-        """
-        super().showEvent(a0)
+    def show_and_activate(self) -> None:
+        """Shows the window and pushes it to the front"""
+        if not self.isVisible():
+            self.show()
 
         if self.__settings_open:
             self.toggle_settings()
 
+        # Perform the platform-specific activation **first**
+        self.plat_handler.on_show()
+
         self.raise_()
         self.activateWindow()
+
         self.results_widget.unfocus()
         self.search_widget.setFocus()
         self.search_widget.selectAll()
-        self.plat_handler.on_show()
 
     def toggle_settings(self) -> None:
         """Shows (or hides) the settings widget"""

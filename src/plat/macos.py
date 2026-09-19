@@ -6,14 +6,18 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 
 from pathlib import Path
 from platform import machine
+from typing import TYPE_CHECKING
 
 import quickmachotkey.constants as c  # type: ignore
-from AppKit import NSApplication, NSApplicationActivationPolicyAccessory  # type: ignore
-from PyQt6.QtCore import QObject
+from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSWindowCollectionBehaviorCanJoinAllSpaces, NSWindowCollectionBehaviorFullScreenAuxiliary  # type: ignore
+from objc import objc_object  # type: ignore
 from quickmachotkey import mask, quickHotKey  # type: ignore
 
 from config import get_config
 from plat import IS_MAC, PlatformHandler
+
+if TYPE_CHECKING:
+    from gui import MainWindow
 
 # This thing fucking sucks. I hate keybinds.
 MISERABLE_MAPPER = {
@@ -138,11 +142,12 @@ def resolve_macos_rbw() -> str:
 class MacOsPlatformHandler(PlatformHandler):
     """A generic QObject to which we can attach both a qt signal and a hotkey listener to"""
 
-    def __init__(self, parent: QObject | None) -> None:
+    def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
         self.__config = get_config()
         self.__app = NSApplication.sharedApplication()
         self.__app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+        self.__main_window = parent
 
         @quickHotKey(virtualKey=self.__get_virt_key(), modifierMask=mask(*self.__get_modifier_mask()))
         def show() -> None:
@@ -150,6 +155,15 @@ class MacOsPlatformHandler(PlatformHandler):
 
         # Unused, just here for the sake of avoiding GC (again T_T)
         self._show_event = show
+
+    def configure_window(self) -> None:
+        """Performs custom configuration to make the overlay behave like one"""
+        # Apparently this forces QT to make a native window. Huh.
+        win_id = int(self.__main_window.winId())
+        view = objc_object(c_void_p=win_id)
+        window = view.window()
+
+        window.setCollectionBehavior_(NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary)
 
     def on_show(self):
         if IS_MAC:
