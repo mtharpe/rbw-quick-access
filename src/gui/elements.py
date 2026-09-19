@@ -225,9 +225,9 @@ class HotkeyGuide(QWidget):
         super().__init__()
         self.config = get_config()
         layout = QHBoxLayout()
-        layout.addWidget(self.__make_guide(str(self.config.copy_username), "Copy username"))
-        layout.addWidget(self.__make_guide(str(self.config.copy_password), "Copy password"))
-        layout.addWidget(self.__make_guide(str(self.config.copy_totp), "Copy totp"))
+        layout.addWidget(self.__make_guide(self.config.copy_username.to_string(qt_fmt=True), "Copy username"))
+        layout.addWidget(self.__make_guide(self.config.copy_password.to_string(qt_fmt=True), "Copy password"))
+        layout.addWidget(self.__make_guide(self.config.copy_totp.to_string(qt_fmt=True), "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
@@ -260,7 +260,7 @@ class KeybindEditor(QKeySequenceEdit):
             on_change (Callable[[QKeySequence, Keybind], None]): The callback which provides
               the keyseq and affected keybind when the keysequence is changed
         """
-        super().__init__(str(keybind), parent)
+        super().__init__(keybind.to_string(qt_fmt=True), parent)
         self.__on_change = on_change
         self.__keybind = keybind
         self.__keybind.on_restored.connect(self.__on_restored)
@@ -293,7 +293,7 @@ class KeybindEditor(QKeySequenceEdit):
 
     def __on_restored(self):
         """Unsets whatever changes were made to this keybind"""
-        self.setKeySequence(QKeySequence.fromString(str(self.__keybind), format=QKeySequence.SequenceFormat.PortableText))
+        self.setKeySequence(QKeySequence.fromString(self.__keybind.to_string(qt_fmt=True), format=QKeySequence.SequenceFormat.PortableText))
 
 
 class DismissableDialog(QDialog):

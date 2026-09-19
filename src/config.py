@@ -76,8 +76,8 @@ class Keybind(QObject):
         Returns:
             bool: True if the key combo is an exact match
         """
-        # Why reinvent the wheel - str(self) uses the nicely defined creator below
-        self_seq = QKeySequence.fromString(str(self), QKeySequence.SequenceFormat.PortableText)
+        # Why reinvent the wheel - self.to_string uses the nicely defined creator below
+        self_seq = QKeySequence.fromString(self.to_string(qt_fmt=True), QKeySequence.SequenceFormat.PortableText)
         return self_seq.matches(QKeySequence(combo)) == QKeySequence.SequenceMatch.ExactMatch
 
     def set(self, new_sequence: QKeySequence):
@@ -87,7 +87,7 @@ class Keybind(QObject):
             new_sequence (QKeySequence): The new keybind sequence
         """
         # Make a full backup
-        self.original = Keybind.deserialize(str(self))
+        self.original = Keybind.deserialize(self.to_string())
 
         # The QT key format here is.... weird. This was easiest.
         as_str = new_sequence.toString(QKeySequence.SequenceFormat.PortableText)
@@ -113,25 +113,26 @@ class Keybind(QObject):
         self.original = None
         self.on_restored.emit()
 
-    def __str__(self):
-        """Creates a string repr of the keybind
-
-        Returns:
-            str: A string repr of the keybind, compatible as an input to Keybind::from_text
-        """
+    def to_string(self, qt_fmt=False) -> str:
+        """Creates a (QT-compatible if set) string from this keybind"""
+        ctrl = self.meta if (qt_fmt and IS_MAC) else self.ctrl
+        meta = self.ctrl if (qt_fmt and IS_MAC) else self.meta
 
         return "+".join(
             filter(
                 bool,
                 [
-                    "Ctrl" if self.ctrl else "",
+                    "Ctrl" if ctrl else "",
                     "Alt" if self.alt else "",
-                    "Meta" if self.meta else "",
+                    "Meta" if meta else "",
                     "Shift" if self.shift else "",
                     self.trigger,
                 ],
             )
         )
+
+    def __str__(self) -> str:
+        return self.to_string()
 
 
 @dataclass
@@ -149,11 +150,11 @@ class Config:
         conf = configparser.ConfigParser()
         conf["general"] = {"version": str(self.version)}
         conf["keybinds"] = {
-            "show": str(self.show),
-            "copy_username": str(self.copy_username),
-            "copy_password": str(self.copy_password),
-            "copy_totp": str(self.copy_totp),
-            "open_in_browser": str(self.open_in_browser),
+            "show": self.show.to_string(),
+            "copy_username": self.copy_username.to_string(),
+            "copy_password": self.copy_password.to_string(),
+            "copy_totp": self.copy_totp.to_string(),
+            "open_in_browser": self.open_in_browser.to_string(),
         }
 
         with open(conf_path, "w", encoding="utf-8") as conf_fh:
