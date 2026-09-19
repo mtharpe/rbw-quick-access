@@ -4,6 +4,7 @@
 Various GUI elements used by other widgets throughout the application
 """
 
+from collections.abc import Callable
 from threading import Thread
 from typing import TYPE_CHECKING, cast
 
@@ -21,6 +22,7 @@ from PyQt6.QtWidgets import (
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -222,7 +224,7 @@ class HotkeyGuide(QWidget):
 
 
 class KeybindChanger(QWidget):
-    def __init__(self, parent: QWidget, label: str, keybind: Keybind):
+    def __init__(self, parent: QWidget, label: str, keybind: Keybind, on_change: Callable):
         """A super simple QWidget wrapper around a QKeySequenceEditor, which
         adds a label, sets defaults on the KeySequenceEdit, and binds on_change
 
@@ -234,15 +236,21 @@ class KeybindChanger(QWidget):
         super().__init__(parent)
         self.__keybind = keybind
         self.__config = get_config()
+        self.__on_change = on_change
 
         self.label = QLabel(label, self)
         self.editor = QKeySequenceEdit(str(keybind), self)
         self.editor.setClearButtonEnabled(True)
         self.editor.keySequenceChanged.connect(self.on_change)
 
+        # self.editor.setFixedWidth(256)
+
         layout = QHBoxLayout()
+
         layout.addWidget(self.label)
         layout.addWidget(self.editor)
+        # layout.addStretch()
+        self.setLayout(layout)
 
     def on_change(self, seq: QKeySequence):
         """Triggered whenever the key sequence has been changed
@@ -250,5 +258,8 @@ class KeybindChanger(QWidget):
         Args:
             seq (QKeySequence): The new key sequence to propagate
         """
+        # TODO: VALIDATE INPUT
+        self.editor.clearFocus()
         self.__keybind.set(seq)
         self.__config.save()
+        self.__on_change()

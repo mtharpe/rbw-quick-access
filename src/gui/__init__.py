@@ -6,8 +6,8 @@ The core GUI elements for the application
 
 import webbrowser
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QHideEvent, QKeyEvent, QShowEvent
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QShowEvent
 from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
@@ -29,20 +29,24 @@ class MainWindow(QMainWindow):
 
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
+        self.hotkey_guide = HotkeyGuide()
 
         self.settings_widget = SettingsWidget(self)
+        self.settings_widget.config_changed.connect(self.__update_config)
 
         # The widgets above aren't using this window as the parent
         #  Plus we want them in the box layout, so...
         layout = QVBoxLayout()
         layout.addWidget(self.search_widget)
         layout.addWidget(self.results_widget)
-        layout.addWidget(HotkeyGuide())
+        layout.addWidget(self.hotkey_guide)
+        layout.addWidget(self.settings_widget)
 
         # On top of that, you can't set a layout on a QMainWindow.
         #  So this is the route around that. Not bad
         layout_widget = QWidget()
         layout_widget.setLayout(layout)
+        layout_widget.adjustSize()
         self.search_widget.on_input_changed("")
         self.setCentralWidget(layout_widget)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
@@ -67,9 +71,18 @@ class MainWindow(QMainWindow):
         """Shows (or hides) the settings widget"""
         if self.__settings_open:
             self.settings_widget.hide()
+            self.search_widget.show()
+            self.results_widget.show()
+            self.hotkey_guide.show()
         else:
             self.settings_widget.show()
+            self.search_widget.hide()
+            self.results_widget.hide()
+            self.hotkey_guide.hide()
+
         self.__settings_open = not self.__settings_open
+        # Do a short delay before readjusting the main window size
+        QTimer.singleShot(0, self.adjustSize)
 
     def hideEvent(self, a0: QHideEvent | None) -> None:
         """Called when the QWidget is hidden. In this case, it's only used
@@ -181,43 +194,43 @@ class MainWindow(QMainWindow):
         """
         self.__selection = selection
 
+    def __update_config(self):
+        """Called when the config has been updated"""
+        print("Config update signal received!")
+        self.__config = get_config()
 
-class SettingsWidget(QMainWindow):
+
+class SettingsWidget(QWidget):
+    config_changed = pyqtSignal()
+
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
         self.__config = get_config()
 
-        self.main_window = parent
-        self.label = QLabel("Settings :)")
+        self.label = QLabel("Settings")
+        custom_font = QFont()
+        custom_font.setPixelSize(24)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setFont(custom_font)
+        self.btn = QPushButton("Back")
+        self.btn.clicked.connect(parent.toggle_settings)
+
         self.editors = [
-            KeybindChanger(self, "Copy Username", self.__config.copy_username),
+            KeybindChanger(self, "Show Window", self.__config.show, self.config_changed.emit),
+            KeybindChanger(self, "Open Item in Browser", self.__config.open_in_browser, self.config_changed.emit),
+            KeybindChanger(self, "Copy Username", self.__config.copy_username, self.config_changed.emit),
+            KeybindChanger(self, "Copy Password", self.__config.copy_password, self.config_changed.emit),
+            KeybindChanger(self, "Copy TOTP", self.__config.copy_totp, self.config_changed.emit),
         ]
 
-        self.btn = QPushButton("Back")
-        self.btn.clicked.connect(self.hide)
-
         layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self.label)
-        layout.addWidget(self.btn)
         [layout.addWidget(w) for w in self.editors]
+        layout.addWidget(self.btn)
 
-        layout_widget = QWidget()
-        layout_widget.setLayout(layout)
-        # self.setFixedSize(layout_widget.sizeHint())
-        self.setCentralWidget(layout_widget)
-
-    def show(self):
-        super().show()
-
-        self.main_window.hide()
-        self.main_window.clearFocus()
-        self.setFocus()
-        self.raise_()
-
-    def hide(self):
-        super().hide()
-
-        self.clearFocus()
-        self.main_window.show()
-        self.main_window.setFocus()
-        self.main_window.raise_()
+        self.setLayout(layout)
+        # Keeps the first KeybindChanger from stealing focus on open
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.hide()

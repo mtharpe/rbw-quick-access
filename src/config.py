@@ -10,7 +10,7 @@ from os import makedirs
 from pathlib import Path
 
 from platformdirs import user_config_dir
-from PyQt6.QtCore import QKeyCombination
+from PyQt6.QtCore import QKeyCombination, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 
 CURRENT_VERSION = 1
