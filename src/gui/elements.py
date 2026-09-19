@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QSizePolicy,
+    QStackedWidget,
     QStyle,
     QStyledItemDelegate,
     QStyleOptionViewItem,
@@ -32,6 +33,30 @@ from rbw import BitwardenEntry
 
 if TYPE_CHECKING:
     from gui import MainWindow
+
+
+class DynamicStackedWidget(QStackedWidget):
+    def sizeHint(self) -> QSize:
+        """Overrides the sizeHint to grab it from the current element if set
+
+        Returns:
+            QSize: The size hint from the currently active widget
+        """
+        current = self.currentWidget()
+        if not current:
+            return super().sizeHint()
+        return current.sizeHint()
+
+    def minimumSizeHint(self) -> QSize:
+        """Overrides the _minimum_ sizeHint to grab it from the current element if set
+
+        Returns:
+            QSize: The  _minimum_ size hint from the currently active widget
+        """
+        current = self.currentWidget()
+        if not current:
+            return super().minimumSizeHint()
+        return current.minimumSizeHint()
 
 
 class SearchBox(QLineEdit):

@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidg
 
 import rbw
 from config import get_config
-from gui.elements import HotkeyGuide, KeybindChanger, SearchBox, SearchResults
+from gui.elements import DynamicStackedWidget, HotkeyGuide, KeybindChanger, SearchBox, SearchResults
 from plat import get_platform_handler
 from rbw import BitwardenEntry
 
@@ -27,29 +27,33 @@ class MainWindow(QMainWindow):
         self.__config = get_config()
         self.__settings_open = False
 
+        # Dependent widgets for this class
         self.search_widget = SearchBox(self)
         self.results_widget = SearchResults(self)
         self.hotkey_guide = HotkeyGuide()
 
-        self.settings_widget = SettingsWidget(self)
-        self.settings_widget.config_changed.connect(self.__update_config)
+        """REGION VIEW CONFIGURATIONS"""
 
-        # The widgets above aren't using this window as the parent
-        #  Plus we want them in the box layout, so...
-        layout = QVBoxLayout()
-        layout.addWidget(self.search_widget)
-        layout.addWidget(self.results_widget)
-        layout.addWidget(self.hotkey_guide)
-        layout.addWidget(self.settings_widget)
+        self.qa_view = QWidget()
+        qa_layout = QVBoxLayout()
+        qa_layout.addWidget(self.search_widget)
+        qa_layout.addWidget(self.results_widget)
+        qa_layout.addWidget(self.hotkey_guide)
+        self.qa_view.setLayout(qa_layout)
 
-        # On top of that, you can't set a layout on a QMainWindow.
-        #  So this is the route around that. Not bad
-        layout_widget = QWidget()
-        layout_widget.setLayout(layout)
-        layout_widget.adjustSize()
+        self.settings_view = SettingsWidget(self)
+        self.settings_view.config_changed.connect(self.__update_config)
+
+        self.views = DynamicStackedWidget()
+        self.views.addWidget(self.qa_view)
+        self.views.addWidget(self.settings_view)
+
+        """ENDREGION VIEW CONFIGURATIONS"""
+
         self.search_widget.on_input_changed("")
-        self.setCentralWidget(layout_widget)
+        self.setCentralWidget(self.views)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.resize(self.width(), qa_layout.sizeHint().height())
 
     def showEvent(self, a0: QShowEvent | None) -> None:
         """Called when the QWidget is shown. In this case, it's used to pre-propagate
@@ -69,19 +73,15 @@ class MainWindow(QMainWindow):
 
     def toggle_settings(self) -> None:
         """Shows (or hides) the settings widget"""
+        new_view: QWidget
         if self.__settings_open:
-            self.settings_widget.hide()
-            self.search_widget.show()
-            self.results_widget.show()
-            self.hotkey_guide.show()
+            new_view = self.qa_view
         else:
-            self.settings_widget.show()
-            self.search_widget.hide()
-            self.results_widget.hide()
-            self.hotkey_guide.hide()
+            new_view = self.settings_view
 
         self.__settings_open = not self.__settings_open
-        # Do a short delay before readjusting the main window size
+        self.views.setCurrentWidget(new_view)
+        # Short delay before adjusting size for consistent behavior
         QTimer.singleShot(0, self.adjustSize)
 
     def hideEvent(self, a0: QHideEvent | None) -> None:
@@ -231,6 +231,7 @@ class SettingsWidget(QWidget):
         layout.addWidget(self.btn)
 
         self.setLayout(layout)
+        self.adjustSize()
         # Keeps the first KeybindChanger from stealing focus on open
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.hide()
