@@ -172,16 +172,19 @@ class MacOsPlatformHandler(PlatformHandler):
             raise KeyError
         return MISERABLE_MAPPER[uppies]
 
-    def __get_modifier_mask(self) -> list[c.VirtualKey]:
+    def __get_modifier_mask(self) -> list[c.ModifierKey]:
         """Builds out the modifier mask list from the keybind"""
-        return list(
-            filter(
-                bool,
-                [
-                    c.controlKey if self.__config.show.ctrl else None,
-                    c.optionKey if self.__config.show.alt else None,
-                    c.cmdKey if self.__config.show.meta else None,
-                    c.shiftKey if self.__config.show.shift else None,
-                ],
-            )
-        )
+        modifiers: list[c.ModifierKey] = []
+        if self.__config.show.ctrl:
+            modifiers.append(c.controlKey)
+
+        if self.__config.show.alt:
+            modifiers.append(c.optionKey)
+
+        if self.__config.show.meta:
+            modifiers.append(c.cmdKey)
+
+        if self.__config.show.shift:
+            modifiers.append(c.shiftKey)
+
+        return modifiers
