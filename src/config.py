@@ -13,6 +13,8 @@ from platformdirs import user_config_dir
 from PyQt6.QtCore import QKeyCombination, QObject, pyqtSignal
 from PyQt6.QtGui import QKeySequence
 
+from plat import IS_MAC
+
 CURRENT_VERSION = 1
 
 config_dir = user_config_dir("rbw-quick-access")
@@ -92,9 +94,10 @@ class Keybind(QObject):
         new_kb = Keybind.deserialize(as_str)
 
         self.trigger = new_kb.trigger
-        self.ctrl = new_kb.ctrl
+        # Swap out meta and ctrl for macOS
+        self.ctrl = new_kb.meta if IS_MAC else new_kb.ctrl
+        self.meta = new_kb.ctrl if IS_MAC else new_kb.meta
         self.alt = new_kb.alt
-        self.meta = new_kb.meta
         self.shift = new_kb.shift
 
     def restore(self):
