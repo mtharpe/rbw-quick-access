@@ -64,6 +64,9 @@ class MainWindow(QMainWindow):
         """
         super().showEvent(a0)
 
+        if self.__settings_open:
+            self.toggle_settings()
+
         self.raise_()
         self.activateWindow()
         self.results_widget.unfocus()
@@ -248,7 +251,6 @@ class SettingsWidget(QWidget):
         self.adjustSize()
         # Keeps the first KeybindChanger from stealing focus on open
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        # self.hide()
 
     def on_show_key_changed(self, seq: QKeySequence, kb: Keybind):
         """Called whenever the show key has been changed"""
@@ -268,10 +270,10 @@ class SettingsWidget(QWidget):
 
     def on_save_pressed(self):
         """Called when the Save button has been pressed"""
+        self.__config.save()
 
         dlg = YesNoDialog(self, "Restart?", "Saving requires an application restart. Restart now?")
         if dlg.exec():
-            self.__config.save()
             self.main_window.plat_handler.restart_app()
 
     def on_cancel_pressed(self):
