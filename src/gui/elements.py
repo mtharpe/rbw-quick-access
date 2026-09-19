@@ -300,11 +300,26 @@ class KeybindChanger(QWidget):
 class DismissableDialog(QDialog):
     def __init__(self, parent: QWidget, title: str, msg: str):
         super().__init__(parent)
-
         self.setWindowTitle(title)
 
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         self.buttonBox.accepted.connect(self.accept)
+
+        msg_lbl = QLabel(msg)
+        layout = QVBoxLayout()
+        layout.addWidget(msg_lbl)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
+
+
+class YesNoDialog(QDialog):
+    def __init__(self, parent: QWidget, title: str, msg: str):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
 
         msg_lbl = QLabel(msg)
         layout = QVBoxLayout()

@@ -50,7 +50,7 @@ def keybind_to_ecode(binding: Keybind) -> list[list[int]]:
             return EVDEV_NAMES[key]
 
         try:
-            return ecodes.ecodes[f"KEY_{key.upper}"]
+            return ecodes.ecodes[f"KEY_{key.upper()}"]
         except KeyError:
             raise ValueError(f"Unsupported evdev key: {key}")
 
@@ -85,7 +85,7 @@ class LinuxPlatformHandler(PlatformHandler):
 
     def validate(self, key: str) -> bool:
         """Confirms that the key is valid using our custom evdev names or existing ecodes"""
-        return key in EVDEV_NAMES or f"KEY_{key.upper}" in ecodes.ecodes
+        return key in EVDEV_NAMES or f"KEY_{key.upper()}" in ecodes.ecodes
 
     def __start_threads(self):
         """Spins up a thread for each device listening to keybinds"""

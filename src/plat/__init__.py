@@ -2,13 +2,13 @@
 A global, cross-platform(ish) handler for tons of things.
 """
 
+import sys
 from os import execv
-from sys import argv, executable, platform
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-IS_MAC = platform == "darwin"
-IS_LINUX = platform == "linux"
+IS_MAC = sys.platform == "darwin"
+IS_LINUX = sys.platform == "linux"
 
 
 class PlatformHandler(QObject):
@@ -38,7 +38,13 @@ class PlatformHandler(QObject):
 
     def restart_app(self) -> None:
         """Performs a full restart of the application. Impl allows each platform to do this differently if needed"""
-        execv(executable, [executable, *argv[1:]])
+
+        # If the application has been built by PyInstaller (i.e., isn't frozen),
+        #  we do / don't include the whole argv set to include `main.py`
+        args = sys.argv[1:] if getattr(sys, "frozen", False) else sys.argv
+        # We use `execv` to essentially replace the current process, and retain the PID
+        #  It also works exceptionally well with systemd, run.d, and whatever macOS uses
+        execv(sys.executable, [sys.executable, *args])
 
 
 def get_platform_handler(parent: QObject) -> PlatformHandler:

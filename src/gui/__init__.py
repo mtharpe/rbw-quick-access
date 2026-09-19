@@ -8,11 +8,11 @@ import webbrowser
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QShowEvent
-from PyQt6.QtWidgets import QDialog, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
 from config import Keybind, get_config
-from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindChanger, SearchBox, SearchResults
+from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindChanger, SearchBox, SearchResults, YesNoDialog
 from plat import get_platform_handler
 from rbw import BitwardenEntry
 
@@ -236,12 +236,9 @@ class SettingsWidget(QWidget):
         key = seq.toString(QKeySequence.SequenceFormat.PortableText).split("+")[-1]
         valid = self.main_window.plat_handler.validate(key)
         if not valid:
-            print("Key invalid")
             dlg = DismissableDialog(self, "Failed to Set Key", f"Key '{key}' is not a valid choice on your OS. Please pick another!")
             dlg.exec()
             return
-        else:
-            print("Key valid")
 
         self.on_key_changed(seq, kb)
 
@@ -252,12 +249,8 @@ class SettingsWidget(QWidget):
 
     def on_save_pressed(self):
         """Called when the Save button has been pressed"""
-        # self.main_window.toggle_settings()
-        # TODO: Popup Window
 
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Restart?")
-        # dlg.addAction("Yes", action=QAction())
-        dlg.exec()
-
-        self.__config.save()
+        dlg = YesNoDialog(self, "Restart?", "Saving requires an application restart. Restart now?")
+        if dlg.exec():
+            self.__config.save()
+            self.main_window.plat_handler.restart_app()
