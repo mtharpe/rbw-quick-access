@@ -1,3 +1,9 @@
+"""
+@author Jose Stovall | oitsjustjose
+
+A wrapper around the various rbw commands, including caching for better performance
+"""
+
 from signal import SIGINT, signal
 from sys import argv
 

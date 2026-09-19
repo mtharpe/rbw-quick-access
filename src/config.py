@@ -1,3 +1,9 @@
+"""
+@author Jose Stovall | oitsjustjose
+
+A light-weight configparser backed configuration and Config singleton
+"""
+
 import configparser
 from dataclasses import dataclass
 from os import makedirs

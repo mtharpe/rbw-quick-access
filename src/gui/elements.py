@@ -1,3 +1,9 @@
+"""
+@author Jose Stovall | oitsjustjose
+
+Various GUI elements used by other widgets throughout the application
+"""
+
 from threading import Thread
 from typing import TYPE_CHECKING, cast
 

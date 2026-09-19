@@ -1,3 +1,9 @@
+"""
+@author Jose Stovall | oitsjustjose
+
+The core GUI elements for the application
+"""
+
 import webbrowser
 
 from PyQt6.QtCore import Qt
