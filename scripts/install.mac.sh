@@ -30,16 +30,49 @@ sudo cp -a ./rbw/rbw /usr/local/bin/
 sudo cp -a ./rbw/rbw-agent /usr/local/bin/
 
 # Finally make a symlink to the `/opt` exec in /usr/local/bin
-sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access|
+sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access
+
+# Clean up the old rbw quick access startup script
+osascript -e \
+    'tell application "System Events" to delete login item "rbw-quick-access"' \
+    2>/dev/null || true
 
 read -p "Should rbw-quick-access start on login? y/n" -n 1 -r
+
+
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Add rbw-quick-access as a login item
-    osascript -e \
-        'tell application "System Events" to make login item at end with properties {path:"/usr/local/bin/rbw-quick-access", hidden:true}'
-fi
+    LAUNCH_AGENT="$HOME/Library/LaunchAgents/com.oitsjustjose.rbw-quick-access.plist"
+    mkdir -p "$HOME/Library/LaunchAgents"
+    cat > "$LAUNCH_AGENT" <<-EOF
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.oitsjustjose.rbw-quick-access</string>
 
-bash -c "nohup rbw-quick-access >/dev/null 2>&1  &"
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/local/bin/rbw-quick-access</string>
+        </array>
+
+        <key>RunAtLoad</key>
+        <true/>
+
+        <key>KeepAlive</key>
+        <true/>
+
+        <key>ProcessType</key>
+        <string>Interactive</string>
+    </dict>
+    </plist>
+EOF
+    launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT"
+else
+    bash -c "nohup rbw-quick-access >/dev/null 2>&1  &"
+fi
 
 echo "Installed to $INSTALL_DIR with a symlink in /usr/local/bin"
 echo " Give it a try with CMD+Shift+\\!"

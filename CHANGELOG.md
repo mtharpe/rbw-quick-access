@@ -10,6 +10,7 @@ To keep things easy on me (since this is something you won't change often), modi
 
 ### Added
 
+-   Settings GUI -- open with <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>+<kbd>,</kbd> for macOS users)
 -   Ability to modify the keybinds for:
     -   Showing the application
     -   Opening the URL for a given entry
@@ -23,6 +24,7 @@ To keep things easy on me (since this is something you won't change often), modi
 -   If the window was already shown, but backgrounded, the show keybind wouldn't bring it back to the front.
 -   [macOS] Opening Quick Access while in a full-screen application would take you out of the fullscreen application to show
 -   [macOS] Exiting out of Quick Access wouldn't return focus to your previous window
+-   [macOS] When the launcher starts at login, a terminal window would appear for the application
 
 # 0.0.3
 
