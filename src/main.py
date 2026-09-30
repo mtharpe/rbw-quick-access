@@ -27,8 +27,8 @@ def main():
 
     window = MainWindow()
     window.setMinimumHeight(0)
-    # No longer show immediately -- rely on keybinds.
-    # window.show()
+
+    app.focusWindowChanged.connect(window.on_focus_window_changed)
 
     # Since the app is stuck in an `exec` loop and the `hotkey` embedded loop
     # in the MainWindow is running, we need to handle SIGINT differently. Ugh.

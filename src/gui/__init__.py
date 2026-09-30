@@ -4,12 +4,13 @@
 The core GUI elements for the application
 """
 
-from datetime import datetime as dt, timezone
 import webbrowser
+from datetime import datetime as dt
+from datetime import timezone
 from time import sleep
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence
+from PyQt6.QtCore import QEvent, Qt, QTimer
+from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
@@ -60,6 +61,15 @@ class MainWindow(QMainWindow):
         # Wait to configure the window until other QT configuration has been completed
         self.plat_handler.configure_window()
 
+    def on_focus_window_changed(self, window: QWindow | None):
+        """Called when the focused application has been changed
+
+        Args:
+            window (QWindow | None): The window we have changed to
+        """
+        if window is not self.windowHandle():
+            self.hide()
+
     def show_and_activate(self) -> None:
         """Shows the window and pushes it to the front"""
         if not self.isVisible():
@@ -99,12 +109,25 @@ class MainWindow(QMainWindow):
         """Called when the QWidget is hidden. In this case, it's only used
         to call the platform handler's on_hide function if relevant.
 
-        Args:a
+        Args:
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
         self.__hidden_at = dt.now(tz=timezone.utc)
         self.plat_handler.on_hide()
         return super().hideEvent(a0)
+
+    def changeEvent(self, a0: QEvent | None) -> None:
+        """Called when the QWidget focus is changed. In our case we use it
+        to ensure that we hide the window when it's lost focus.
+
+        Args:
+            a0 (QEvent | None): The event in
+        """
+
+        if a0 and a0.type() == QEvent.Type.WindowDeactivate:
+            print("Hi")
+
+        return super().changeEvent(a0)
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         """Overrides the generalized keyPressEvent to handle it ourselves after super() is called
