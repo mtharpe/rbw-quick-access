@@ -62,32 +62,29 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
 
 def copy_username(entry: BitwardenEntry):
     try:
-        run(
-            [RBW, "get", entry.id, "--field", "username", "--clipboard"],
-            stdout=PIPE,
-            check=True,
-        ).stdout.decode("utf-8")
+        run([RBW, "get", entry.id, "--field", "username", "--clipboard"], check=True)
     except CalledProcessError:
         return
 
 
 def copy_password(entry: BitwardenEntry):
     try:
-        run(
-            [RBW, "get", entry.id, "--field", "password", "--clipboard"],
-            stdout=PIPE,
-            check=True,
-        ).stdout.decode("utf-8")
+        run([RBW, "get", entry.id, "--field", "password", "--clipboard"], check=True)
     except CalledProcessError:
         return
 
 
 def copy_totp(entry: BitwardenEntry):
     try:
-        run(
-            [RBW, "get", entry.id, "--field", "totp", "--clipboard"],
-            stdout=PIPE,
-            check=True,
-        ).stdout.decode("utf-8")
+        run([RBW, "get", entry.id, "--field", "totp", "--clipboard"], check=True)
     except CalledProcessError:
         return
+
+
+def unlock():
+    """Runs `rbw login` to refresh login state"""
+    try:
+        run([RBW, "unlock"], check=True)
+        return True
+    except CalledProcessError:
+        return False

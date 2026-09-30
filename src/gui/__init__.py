@@ -4,7 +4,9 @@
 The core GUI elements for the application
 """
 
+from datetime import datetime as dt, timezone
 import webbrowser
+from time import sleep
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence
@@ -24,6 +26,7 @@ class MainWindow(QMainWindow):
         self.__selection: BitwardenEntry | None = None
         self.__config = get_config()
         self.__settings_open = False
+        self.__hidden_at = dt.fromtimestamp(0, tz=timezone.utc)
 
         self.plat_handler = get_platform_handler(self)
         self.plat_handler.on_show_signal.connect(self.show_and_activate)
@@ -67,13 +70,17 @@ class MainWindow(QMainWindow):
 
         # Perform the platform-specific activation **first**
         self.plat_handler.on_show()
+        self.block_until_unlock()
+
+        # If it's been more than 30 seconds since you hid the window,
+        #  set up the state to start typing fresh again
+        if (dt.now(tz=timezone.utc) - self.__hidden_at).seconds >= 30:
+            self.results_widget.unfocus()
+            self.search_widget.setFocus()
+            self.search_widget.selectAll()
 
         self.raise_()
         self.activateWindow()
-
-        self.results_widget.unfocus()
-        self.search_widget.setFocus()
-        self.search_widget.selectAll()
 
     def toggle_settings(self) -> None:
         """Shows (or hides) the settings widget"""
@@ -95,6 +102,7 @@ class MainWindow(QMainWindow):
         Args:a
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
+        self.__hidden_at = dt.now(tz=timezone.utc)
         self.plat_handler.on_hide()
         return super().hideEvent(a0)
 
@@ -197,6 +205,17 @@ class MainWindow(QMainWindow):
             selection (BitwardenEntry | None): The selection made - None if we went back to search
         """
         self.__selection = selection
+
+    def block_until_unlock(self):
+        """
+        Blocks the main thread until RBW has been unlocked
+
+        This is done to prevent each typed character from triggering
+            a new unlock, thus triggering a new pinentry window to
+            spawn for each character input while not unlocked.
+        """
+        while not rbw.unlock():
+            sleep(0.1)
 
 
 class SettingsWidget(QWidget):

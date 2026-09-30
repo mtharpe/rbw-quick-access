@@ -1,3 +1,18 @@
+# 1.0.0
+
+Alright, I've been using this tool on macOS and Linux for weeks now, I think it's time to call this an official 1.0.0 release! Just bugfixes that I've been noting as I use it:
+
+### Changed
+
+-   The currently selected item will be unfocused and the searchbox fully selected when at least 30 seconds have elapsed since you last hid the window
+    -   This lets you pick up where you left off if you're having to manually copy username | password | totp, without it being obnoxious and persist forever.
+-
+
+### Fixed
+
+-   On each show, does a check to ensure that `rbw` is unlocked, prompting you for your vault password **before** showing the window.
+    -   This prevents you from typing out your whole search prompt and then getting a `pinentry` window asking for your Bitwarden vault password **for each character you typed**. That was a pain.
+
 # 0.0.4
 
 ## The Configuration Update!
@@ -25,6 +40,8 @@ To keep things easy on me (since this is something you won't change often), modi
 -   [macOS] Opening Quick Access while in a full-screen application would take you out of the fullscreen application to show
 -   [macOS] Exiting out of Quick Access wouldn't return focus to your previous window
 -   [macOS] When the launcher starts at login, a terminal window would appear for the application
+    -   This requires removing the old startup item, and adding an agent
+    -   This isn't a huge deal, but you'll now see the startup agent alert
 
 # 0.0.3
 
