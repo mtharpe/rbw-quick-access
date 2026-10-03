@@ -74,5 +74,11 @@ else
     bash -c "nohup rbw-quick-access >/dev/null 2>&1  &"
 fi
 
+# Fix the quarantine on all newly installed files
+while IFS= LC_ALL=C read -r -d '' -u 9 file
+do
+    xattr -d com.apple.quarantine $file
+done 9< <( find $INSTALL_DIR -type f -exec printf '%s\0' {} + )
+
 echo "Installed to $INSTALL_DIR with a symlink in /usr/local/bin"
 echo " Give it a try with CMD+Shift+\\!"
