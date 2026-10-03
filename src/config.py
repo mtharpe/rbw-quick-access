@@ -175,14 +175,16 @@ def get_config() -> Config:
     """Gets the singleton config instance. If it doesn't exist yet, it's loaded"""
     global CONFIG_INSTANCE
 
+    ctrl = "Meta" if IS_MAC else "Ctrl"
+
     if not CONFIG_INSTANCE:
         # Create the default, save and return it
         if not conf_path.exists():
             CONFIG_INSTANCE = Config(
                 version=CURRENT_VERSION,
                 show=Keybind.deserialize("Meta+Shift+\\"),
-                copy_username=Keybind.deserialize("Ctrl+C"),
-                copy_password=Keybind.deserialize("Ctrl+Shift+C"),
+                copy_username=Keybind.deserialize(f"{ctrl}+C"),
+                copy_password=Keybind.deserialize(f"{ctrl}+Shift+C"),
                 copy_totp=Keybind.deserialize("Alt+Shift+C"),
                 open_in_browser=Keybind.deserialize("Enter"),
             )

@@ -14,6 +14,7 @@ Alright, I've been using this tool on macOS and Linux for weeks now, I think it'
 
 -   On each show, does a check to ensure that `rbw` is unlocked, prompting you for your vault password **before** showing the window.
     -   This prevents you from typing out your whole search prompt and then getting a `pinentry` window asking for your Bitwarden vault password **for each character you typed**. That was a pain.
+-   Default keybinds being broken for macOS, using `Ctrl` instead of `Cmd`
 
 # 0.0.4
 
