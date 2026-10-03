@@ -114,6 +114,7 @@ class MainWindow(QMainWindow):
         """
         self.__hidden_at = dt.now(tz=timezone.utc)
         self.plat_handler.on_hide()
+        rbw.sync()
         return super().hideEvent(a0)
 
     def changeEvent(self, a0: QEvent | None) -> None:

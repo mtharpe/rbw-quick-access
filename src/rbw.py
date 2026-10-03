@@ -7,6 +7,7 @@ A wrapper around the various rbw commands, including caching for better performa
 import json
 from dataclasses import dataclass
 from subprocess import PIPE, CalledProcessError, run
+from threading import Thread
 
 from plat import IS_MAC
 
@@ -79,6 +80,20 @@ def copy_totp(entry: BitwardenEntry):
         run([RBW, "get", entry.id, "--field", "totp", "--clipboard"], check=True)
     except CalledProcessError:
         return
+
+
+def sync():
+    """Runs `rbw sync` -- takes a while, so only call when hidden and call in a background thread!"""
+
+    def __sync():
+        try:
+            run([RBW, "sync"], check=True)
+            print("Synced off-thread :)")
+        except CalledProcessError:
+            pass
+
+    thr = Thread(target=__sync)
+    thr.start()
 
 
 def unlock():

@@ -4,6 +4,8 @@ Alright, I've been using this tool on macOS and Linux for weeks now, I think it'
 
 ### Changed
 
+-   Changes made to your vault will be synced when the window is closed 
+    -   It's a slow process, so it's done in a background thread 
 -   The currently selected item will be unfocused and the searchbox fully selected when at least 30 seconds have elapsed since you last hid the window
     -   This lets you pick up where you left off if you're having to manually copy username | password | totp, without it being obnoxious and persist forever.
 -   Clicking or tabbing out of the `rbw-quick-access` window now hides the window.
