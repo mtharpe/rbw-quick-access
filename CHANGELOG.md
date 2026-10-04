@@ -4,8 +4,15 @@
 
 Alright, I've been using this tool on macOS and Linux for weeks now, I think it's time to call this an official 1.0.0 release! Just bugfixes that I've been noting as I use it:
 
+### Added
+
+-   A way to change open-on-startup behavior on macOS via the Settings GUI
+    -   This is a precursor to the upcoming Homebrew releases I'm working towards!
+
 ### Changed
 
+-   Fully reworked the config system with proper version migration
+    -   Unfortunately this means your previous settings will be lost, particularly your keybinds.
 -   Changes made to your vault will be synced when the window is closed 
     -   It's a slow process, so it's done in a background thread 
 -   The currently selected item will be unfocused and the searchbox fully selected when at least 30 seconds have elapsed since you last hid the window
