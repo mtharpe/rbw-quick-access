@@ -8,7 +8,7 @@ fi
 
 version="$1"
 dist_dir=build/dist/rbw-quick-access
-artifact_name="rbw-quick-access-linux-$version.tar.gz"
+artifact_name="rbw-quick-access-linux-x86_64_$version.tar.gz"
 
 python -m PyInstaller \
     --workpath "build/work" \
