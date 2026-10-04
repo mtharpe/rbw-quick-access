@@ -32,25 +32,15 @@ jobs:
     runs-on: macos-arm64
 
     steps:
-      - name: Check environment
-        run: |
-          echo "$PATH"
-          which node
-          node --version
-
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.10.21"
-
+      # macOS doesn't use setup python since that doesn't work with ARM.
       - name: Install Dependencies
         run: |
-          python --version
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          /opt/homebrew/bin/python3.10 --version
+          /opt/homebrew/bin/python3.10 -m pip install --upgrade pip
+          /opt/homebrew/bin/python3.10 -m pip install -r requirements.txt
 
       - name: Build macOS artifacts
         run: |
