@@ -1,4 +1,6 @@
-# 1.0.0
+# Changelog
+
+## [1.0.0] - 2026-10-04
 
 Alright, I've been using this tool on macOS and Linux for weeks now, I think it's time to call this an official 1.0.0 release! Just bugfixes that I've been noting as I use it:
 
@@ -16,9 +18,9 @@ Alright, I've been using this tool on macOS and Linux for weeks now, I think it'
     -   This prevents you from typing out your whole search prompt and then getting a `pinentry` window asking for your Bitwarden vault password **for each character you typed**. That was a pain.
 -   Default keybinds being broken for macOS, using `Ctrl` instead of `Cmd`
 
-# 0.0.4
+## [0.0.4] - 2026-09-19
 
-## The Configuration Update!
+### The Configuration Update!
 
 This was long overdue -- there's still not an in-application GUI for the config, but this is better than nothing for the time being. After updating, you'll be able to hit <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>+<kbd>,</kbd> for macOS users) to open the settings window.
 
@@ -46,13 +48,13 @@ To keep things easy on me (since this is something you won't change often), modi
     -   This requires removing the old startup item, and adding an agent
     -   This isn't a huge deal, but you'll now see the startup agent alert
 
-# 0.0.3
+## [0.0.3] - 2026-09-09
 
 This update was a huge pain and required me to buy a Mac just to get here. But! In exchange, you get a Mac port. 
 
 If you like this enough, feel free to throw cash my way on [Kofi](https://ko-fi.com/oitsjustjose)? Absolutely no pressure though - I do this for the love of the game.
 
-## macOS Port
+### macOS Port
 
 WOOF - this was a rough one. I ran into so many challenges along the way:
 
@@ -65,7 +67,7 @@ WOOF - this was a rough one. I ran into so many challenges along the way:
 -   Several places where I had to guard against imports that don't exist on non-mac systems
 -   SO many weird specific Mac-specific things for making sure the window worked and behaved as expected. Mildly cursed code, honestly.
 
-## Added
+### Added
 
 -   Global Hotkey Support
     -   **Linux**:
@@ -78,7 +80,7 @@ WOOF - this was a rough one. I ran into so many challenges along the way:
         -   Triggered with <kbd>cmd</kbd> + <kbd>shift</kbd> + <kbd>\\</kbd>
     -   For now, the hotkey is still hard-coded but the next update will add in configurability for this and many other UI and behavioral components!
 
-## Changed
+### Changed
 
 -   Moved to a single, persistent background application which is reveal
 -   Rewrote Linux install to use `systemctl --user` if available, spins up in the background and warns you if not
@@ -90,7 +92,7 @@ WOOF - this was a rough one. I ran into so many challenges along the way:
     -   adds `rbw-quick-access` to your login item if you permit it
     -   starts `rbw-quick-access` in the background
 
-## Fixed
+### Fixed
 
 -   Sometimes inputs like the up or down arrows to get into/out of the results/input field wouldn't work, or would work inconsistently
 -   Fixed a bug where opening up quick-access wouldn't start with the text input field active and text fully highlighted by default.

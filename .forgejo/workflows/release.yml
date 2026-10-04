@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-linux:
+    runs-on: linux-x86
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        run: |
+          python3 --version
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install pyinstaller
+
+      - name: Build Linux artifact
+        run: |
+          chmod +x scripts/build.linux.sh
+          scripts/build.linux.sh "${GITHUB_REF_NAME#v}"
+
+  build-macos:
+    runs-on: macos-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        run: |
+          python3 --version
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install pyinstaller
+
+      - name: Build macOS artifacts
+        run: |
+          chmod +x scripts/build.macos.sh
+          scripts/build.macos.sh "${GITHUB_REF_NAME#v}"
+
+  release:
+    # This can be any runner really.
+    runs-on: linux-x86
+
+    needs:
+      - build-linux
+      - build-macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Create release notes
+        id: changelog
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+
+          awk -v version="$version" '
+            $0 ~ "^## \\[" version "\\]" {
+              found = 1
+              next
+            }
+
+            found && /^## \[/ {
+              exit
+            }
+
+            found {
+              print
+            }
+          ' CHANGELOG.md > release-notes.md
+
+          echo "Release notes:"
+          cat release-notes.md
+
+      - name: Create release
+        env:
+          TOKEN: ${{ secrets.FORGEJO_TOKEN }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          curl \
+            --fail \
+            --request POST \
+            --header "Authorization: token ${TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data @- \
+            "${FORGEJO_API_URL}/repos/${GITHUB_REPOSITORY}/releases" <<EOF
+          {
+            "tag_name": "${VERSION}",
+            "name": "${VERSION}",
+            "body": $(jq -Rs . release-notes.md),
+            "draft": false,
+            "prerelease": false
+          }
+          EOF
