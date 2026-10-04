@@ -35,8 +35,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # - name: Set up Python
-      #   run: which python
+      - name: Set up Python
+        run: |
+          echo "/opt/homebrew/opt/python@3.10/bin" >> "$GITHUB_PATH"
+          python3 --version
 
       - name: Install Dependencies
         run: |
