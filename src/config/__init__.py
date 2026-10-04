@@ -44,6 +44,8 @@ def migrate_raw_config(raw_config: dict) -> dict:
     #  Just don't forget to use elifs. I wish we had switch statements :(
 
     raw_config["version"] = ver + 1
+    with open(conf_path, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(raw_config, indent=2))
     return migrate_raw_config(raw_config)
 
 
