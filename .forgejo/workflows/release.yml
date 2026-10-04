@@ -35,12 +35,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      # macOS doesn't use setup python since that doesn't work with ARM.
+      - name: Set up Python
+        run: alias python=/opt/homebrew/bin/python3.10
+
       - name: Install Dependencies
         run: |
-          /opt/homebrew/bin/python3.10 --version
-          /opt/homebrew/bin/python3.10 -m pip install --upgrade pip
-          /opt/homebrew/bin/python3.10 -m pip install -r requirements.txt
+          which python
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
 
       - name: Build macOS artifacts
         run: |
