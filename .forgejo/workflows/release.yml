@@ -125,7 +125,7 @@ jobs:
           find release-assets -type f -maxdepth 2 -print
 
       - name: Create Forgejo release
-        uses: actions/forgejo-release@v2
+        uses: https://data.forgejo.org/actions/forgejo-release@v2
         with:
           direction: upload
           release-dir: release-assets
