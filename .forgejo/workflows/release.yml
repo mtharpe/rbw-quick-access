@@ -42,11 +42,13 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          source .venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
       - name: Build macOS artifacts
         run: |
+          source .venv/bin/activate
           chmod +x scripts/build.macos.sh
           scripts/build.macos.sh "${GITHUB_REF_NAME#v}"
 
