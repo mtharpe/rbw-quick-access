@@ -24,6 +24,23 @@ if not Path(config_dir).exists():
     makedirs(config_dir)
 
 
+class ConfigParser(configparser.ConfigParser):
+    """A custom config parser implementation which has default support"""
+
+    def __init__(self):
+        super().__init__()
+
+    def get_int_or_default(self, section: str, option: str, default: int) -> int:
+        if not self.has_option(section, option):
+            return default
+        return self.getint(section, option)
+
+    def get_float_or_default(self, section: str, option: str, default: float) -> float:
+        if not self.has_option(section, option):
+            return default
+        return self.getfloat(section, option)
+
+
 class Keybind(QObject):
     """Defines a given trigger key and modifiers"""
 
@@ -138,6 +155,7 @@ class Keybind(QObject):
 @dataclass
 class Config:
     version: int
+    open_at_startup: bool
 
     show: Keybind
     copy_username: Keybind
@@ -148,7 +166,11 @@ class Config:
     def save(self):
         """Persists the current config state to disc"""
         conf = configparser.ConfigParser()
-        conf["general"] = {"version": str(self.version)}
+        conf["general"] = {
+            "version": str(self.version),
+            "open_at_startup": str(self.open_at_startup),
+        }
+
         conf["keybinds"] = {
             "show": self.show.to_string(),
             "copy_username": self.copy_username.to_string(),
@@ -182,6 +204,7 @@ def get_config() -> Config:
         if not conf_path.exists():
             CONFIG_INSTANCE = Config(
                 version=CURRENT_VERSION,
+                open_at_startup=False,
                 show=Keybind.deserialize("Meta+Shift+\\"),
                 copy_username=Keybind.deserialize(f"{ctrl}+C"),
                 copy_password=Keybind.deserialize(f"{ctrl}+Shift+C"),
@@ -196,6 +219,7 @@ def get_config() -> Config:
 
             CONFIG_INSTANCE = Config(
                 version=parser.getint("general", "version"),
+                open_at_startup=parser.getboolean("general", "open_at_startup"),
                 show=Keybind.deserialize(parser.get("keybinds", "show")),
                 copy_username=Keybind.deserialize(parser.get("keybinds", "copy_username")),
                 copy_password=Keybind.deserialize(parser.get("keybinds", "copy_password")),
