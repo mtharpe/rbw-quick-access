@@ -27,6 +27,12 @@ jobs:
     runs-on: macos-arm64
 
     steps:
+      - name: Check environment
+        run: |
+          echo "$PATH"
+          which node
+          node --version
+
       - name: Checkout
         uses: actions/checkout@v6
 
