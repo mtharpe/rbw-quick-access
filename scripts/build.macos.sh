@@ -12,7 +12,7 @@ for arch in arm64 x86_64; do
     echo "Building for $arch..."
     artifact_name="rbw-quick-access-macos-${arch}_${version}.tar.gz"
 
-    python -m PyInstaller \
+    python3 -m PyInstaller \
         --target-arch "$arch" \
         --workpath "build/$arch/work" \
         --distpath "build/$arch/dist" \
