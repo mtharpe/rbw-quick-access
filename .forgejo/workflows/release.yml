@@ -131,4 +131,4 @@ jobs:
           release-dir: release-assets
           tag: ${{ forgejo.ref_name }}
           title: ${{ forgejo.ref_name }}
-          body-file: release-notes.md
+          release-notes-file: release-notes.md
