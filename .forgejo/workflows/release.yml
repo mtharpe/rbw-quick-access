@@ -10,10 +10,10 @@ jobs:
     runs-on: linux-x86
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: https://data.forgejo.org/actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: https://data.forgejo.org/actions/setup-python@v6
         with:
           python-version: "3.10.21"
 
@@ -29,7 +29,7 @@ jobs:
           scripts/build.linux.sh "${GITHUB_REF_NAME#v}"
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+        uses: https://data.forgejo.org/actions/upload-artifact@v4
         with:
           name: linux
           path: |
@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: https://data.forgejo.org/actions/checkout@v6
 
       - name: Set up Python
         run: |
@@ -60,7 +60,7 @@ jobs:
           scripts/build.macos.sh "${GITHUB_REF_NAME#v}"
 
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
+        uses: https://data.forgejo.org/actions/upload-artifact@v4
         with:
           name: macos
           path: |
@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: https://data.forgejo.org/actions/checkout@v6
 
       - name: Create release notes
         id: changelog
@@ -103,13 +103,13 @@ jobs:
           cat release-notes.md
 
       - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
+        uses: https://data.forgejo.org/actions/download-artifact@v4
         with:
           name: macos
           path: release-assets
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
+        uses: https://data.forgejo.org/actions/download-artifact@v4
         with:
           name: linux
           path: release-assets
