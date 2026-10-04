@@ -9,12 +9,12 @@ from datetime import datetime as dt
 from datetime import timezone
 from time import sleep
 
-from PyQt6.QtCore import QEvent, Qt, QTimer
+from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
-from config import Keybind, get_config
+from config import Config, Keybind
 from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindEditor, SearchBox, SearchResults, YesNoDialog
 from plat import get_platform_handler
 from rbw import BitwardenEntry
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
-        self.__config = get_config()
+        self.__config = Config.get()
         self.__settings_open = False
         self.__hidden_at = dt.fromtimestamp(0, tz=timezone.utc)
 
@@ -243,10 +243,12 @@ class MainWindow(QMainWindow):
 
 
 class SettingsWidget(QWidget):
+    cancel_pressed = pyqtSignal()
+
     def __init__(self, parent: MainWindow):
         super().__init__(parent)
         self.main_window = parent
-        self.__config = get_config()
+        self.__config = Config.get()
 
         custom_font = QFont()
         custom_font.setPixelSize(24)
@@ -264,11 +266,12 @@ class SettingsWidget(QWidget):
         # Go through each label and KeybindChanger and configure it into an evenly spaced grid
         for row, (label, editor) in enumerate(
             [
-                ("Show Window", KeybindEditor(self, self.__config.show, self.on_show_key_changed)),
-                ("Open Item in Browser", KeybindEditor(self, self.__config.open_in_browser, self.on_key_changed)),
-                ("Copy Username", KeybindEditor(self, self.__config.copy_username, self.on_key_changed)),
-                ("Copy Password", KeybindEditor(self, self.__config.copy_password, self.on_key_changed)),
-                ("Copy TOTP", KeybindEditor(self, self.__config.copy_totp, self.on_key_changed)),
+                ("Show Window", KeybindEditor(self, self.__config.show, self.on_show_key_changed, self.cancel_pressed)),
+                ("Open Item in Browser", KeybindEditor(self, self.__config.open_in_browser, self.on_key_changed, self.cancel_pressed)),
+                ("Copy Username", KeybindEditor(self, self.__config.copy_username, self.on_key_changed, self.cancel_pressed)),
+                ("Copy Password", KeybindEditor(self, self.__config.copy_password, self.on_key_changed, self.cancel_pressed)),
+                ("Copy TOTP", KeybindEditor(self, self.__config.copy_totp, self.on_key_changed, self.cancel_pressed)),
+                # ("Run at Startup", )TODO: checkbox
             ]
         ):
             keybind_grid.addWidget(QLabel(label), row, 0)
@@ -322,9 +325,6 @@ class SettingsWidget(QWidget):
 
     def on_cancel_pressed(self):
         """Called when the cancel button has been pressed -- resets all changes"""
-        self.__config.show.restore()
-        self.__config.copy_username.restore()
-        self.__config.copy_password.restore()
-        self.__config.copy_totp.restore()
-        self.__config.open_in_browser.restore()
+        # KeybindEditor will unset the uncommitted change since it listens to self.cancel_pressed
+        self.cancel_pressed.emit()
         self.main_window.toggle_settings()

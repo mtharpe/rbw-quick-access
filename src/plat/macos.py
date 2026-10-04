@@ -13,7 +13,7 @@ from AppKit import NSApplication, NSApplicationActivationPolicyAccessory, NSWind
 from objc import objc_object  # type: ignore
 from quickmachotkey import mask, quickHotKey  # type: ignore
 
-from config import get_config
+from config import Config
 from plat import PlatformHandler
 
 if TYPE_CHECKING:
@@ -144,7 +144,7 @@ class MacOsPlatformHandler(PlatformHandler):
 
     def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
-        self.__config = get_config()
+        self.__config = Config.get()
         self.__app = NSApplication.sharedApplication()
         self.__app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
         self.__main_window = parent

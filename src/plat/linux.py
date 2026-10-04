@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from evdev import InputDevice, KeyEvent, categorize, ecodes, list_devices
 from evdev.events import InputEvent
 
-from config import Keybind, get_config
+from config import Config, Keybind
 from plat import PlatformHandler
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ class LinuxPlatformHandler(PlatformHandler):
 
     def __init__(self, parent: "MainWindow") -> None:
         super().__init__(parent)
-        self.__config = get_config()
+        self.__config = Config.get()
         self.__activators = keybind_to_ecode(self.__config.show)
         # ALWAYS START THESE LAST IDIOT -- definitely didn't move this...
         self._listener_threads: list[Thread] = []

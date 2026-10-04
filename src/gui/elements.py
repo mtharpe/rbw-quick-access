@@ -8,7 +8,7 @@ from collections.abc import Callable
 from threading import Thread
 from typing import TYPE_CHECKING, cast
 
-from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtBoundSignal, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 import rbw
-from config import Keybind, get_config
+from config import Config, Keybind
 from rbw import BitwardenEntry
 
 if TYPE_CHECKING:
@@ -229,11 +229,11 @@ class SearchResult(QListWidgetItem):
 class HotkeyGuide(QWidget):
     def __init__(self):
         super().__init__()
-        self.config = get_config()
+        self.config = Config.get()
         layout = QHBoxLayout()
-        layout.addWidget(self.__make_guide(self.config.copy_username.to_string(qt_fmt=True), "Copy username"))
-        layout.addWidget(self.__make_guide(self.config.copy_password.to_string(qt_fmt=True), "Copy password"))
-        layout.addWidget(self.__make_guide(self.config.copy_totp.to_string(qt_fmt=True), "Copy totp"))
+        layout.addWidget(self.__make_guide(self.config.copy_username.serialize(qt_fmt=True), "Copy username"))
+        layout.addWidget(self.__make_guide(self.config.copy_password.serialize(qt_fmt=True), "Copy password"))
+        layout.addWidget(self.__make_guide(self.config.copy_totp.serialize(qt_fmt=True), "Copy totp"))
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
@@ -256,7 +256,7 @@ class HotkeyGuide(QWidget):
 
 
 class KeybindEditor(QKeySequenceEdit):
-    def __init__(self, parent: QWidget, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind], None]):
+    def __init__(self, parent: QWidget, keybind: Keybind, on_change: Callable[[QKeySequence, Keybind], None], on_canceled: pyqtBoundSignal):
         """A super simple QWidget wrapper around a QKeySequenceEditor, which
         adds a label, sets defaults on the KeySequenceEdit, and binds on_change
 
@@ -266,10 +266,10 @@ class KeybindEditor(QKeySequenceEdit):
             on_change (Callable[[QKeySequence, Keybind], None]): The callback which provides
               the keyseq and affected keybind when the keysequence is changed
         """
-        super().__init__(keybind.to_string(qt_fmt=True), parent)
+        super().__init__(keybind.serialize(qt_fmt=True), parent)
         self.__on_change = on_change
         self.__keybind = keybind
-        self.__keybind.on_restored.connect(self.__on_restored)
+        on_canceled.connect(self.__on_restored)
 
         # Debounce timer for the sequence change evt
         self.__pending_seq: QKeySequence | None = None
@@ -299,7 +299,8 @@ class KeybindEditor(QKeySequenceEdit):
 
     def __on_restored(self):
         """Unsets whatever changes were made to this keybind"""
-        self.setKeySequence(QKeySequence.fromString(self.__keybind.to_string(qt_fmt=True), format=QKeySequence.SequenceFormat.PortableText))
+        self.setKeySequence(QKeySequence.fromString(self.__keybind.serialize(qt_fmt=True), format=QKeySequence.SequenceFormat.PortableText))
+        self.__keybind.reset()
 
 
 class DismissableDialog(QDialog):
