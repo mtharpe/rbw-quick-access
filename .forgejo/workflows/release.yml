@@ -35,8 +35,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python
-        run: which python
+      # - name: Set up Python
+      #   run: which python
 
       - name: Install Dependencies
         run: |
