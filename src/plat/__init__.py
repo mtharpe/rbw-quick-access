@@ -53,6 +53,9 @@ class PlatformHandler(QObject):
         #  It also works exceptionally well with systemd, run.d, and whatever macOS uses
         execv(sys.executable, [sys.executable, *args])
 
+    def configure_startup(self, open_on_startup: bool) -> None:
+        """Sets up how open-on-startup behavior works"""
+
 
 def get_platform_handler(parent: "MainWindow") -> PlatformHandler:
     if IS_MAC:

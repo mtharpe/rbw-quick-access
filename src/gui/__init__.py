@@ -11,12 +11,12 @@ from time import sleep
 
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
-from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
 from config import Config, Keybind
 from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindEditor, SearchBox, SearchResults, YesNoDialog
-from plat import get_platform_handler
+from plat import IS_LINUX, get_platform_handler
 from rbw import BitwardenEntry
 
 
@@ -271,7 +271,6 @@ class SettingsWidget(QWidget):
                 ("Copy Username", KeybindEditor(self, self.__config.copy_username, self.on_key_changed, self.cancel_pressed)),
                 ("Copy Password", KeybindEditor(self, self.__config.copy_password, self.on_key_changed, self.cancel_pressed)),
                 ("Copy TOTP", KeybindEditor(self, self.__config.copy_totp, self.on_key_changed, self.cancel_pressed)),
-                # ("Run at Startup", )TODO: checkbox
             ]
         ):
             keybind_grid.addWidget(QLabel(label), row, 0)
@@ -280,6 +279,16 @@ class SettingsWidget(QWidget):
         keybind_grid.setColumnStretch(0, 1)
         keybind_grid.setColumnStretch(1, 1)
         """ENDREGION: Keybind Grid"""
+
+        """REGION: Checkboxes"""
+        # I guess we'll eval this each time anyways? ¯\_(ツ)_/¯
+        open_at_startup_layout = QHBoxLayout()
+        self.__open_at_startup_chkbx = QCheckBox()
+        self.__open_at_startup_chkbx.setChecked(self.__config.open_at_startup)
+        self.__open_at_startup_chkbx.checkStateChanged.connect(self.on_open_at_startup_changed)
+        open_at_startup_layout.addWidget(QLabel("Open at Startup"))
+        open_at_startup_layout.addWidget(self.__open_at_startup_chkbx)
+        """ENDREGION: Checkboxes"""
 
         """REGION: Buttons"""
         save_btn = QPushButton("Save")
@@ -293,6 +302,7 @@ class SettingsWidget(QWidget):
         """ENDREGION: Buttons"""
 
         layout.addLayout(keybind_grid)
+        not IS_LINUX and layout.addLayout(open_at_startup_layout)  # type: ignore
         layout.addLayout(btn_layout)
         self.setLayout(layout)
         self.adjustSize()
@@ -315,8 +325,18 @@ class SettingsWidget(QWidget):
         kb.set(seq)
         self.setFocus()
 
+    def on_open_at_startup_changed(self, new_state: Qt.CheckState):
+        """Called when the checkbox for "Open at Startup" is changed"""
+        self.__open_at_startup_tmp = new_state != Qt.CheckState.Unchecked
+
     def on_save_pressed(self):
         """Called when the Save button has been pressed"""
+        # Handle the temporary, stored startup button state.
+        if self.__open_at_startup_tmp != self.__config.open_at_startup:
+            self.__config.open_at_startup = self.__open_at_startup_tmp
+            del self.__open_at_startup_tmp
+            self.main_window.plat_handler.configure_startup(self.__config.open_at_startup)
+
         self.__config.save()
 
         dlg = YesNoDialog(self, "Restart?", "Saving requires an application restart. Restart now?")
@@ -327,4 +347,6 @@ class SettingsWidget(QWidget):
         """Called when the cancel button has been pressed -- resets all changes"""
         # KeybindEditor will unset the uncommitted change since it listens to self.cancel_pressed
         self.cancel_pressed.emit()
+        # Also want to undo any modifications to the checkbox here.
+        self.__open_at_startup_chkbx.setChecked(self.__config.open_at_startup)
         self.main_window.toggle_settings()
