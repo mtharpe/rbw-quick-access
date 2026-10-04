@@ -28,6 +28,13 @@ jobs:
           chmod +x scripts/build.linux.sh
           scripts/build.linux.sh "${GITHUB_REF_NAME#v}"
 
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            rbw-quick-access-linux-*.tar.gz
+
   build-macos:
     runs-on: macos-arm64
 
@@ -51,6 +58,13 @@ jobs:
           source .venv/bin/activate
           chmod +x scripts/build.macos.sh
           scripts/build.macos.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            rbw-quick-access-macos-*.tar.gz
 
   release:
     # This can be any runner really.
@@ -88,23 +102,27 @@ jobs:
           echo "Release notes:"
           cat release-notes.md
 
-      - name: Create release
-        env:
-          TOKEN: ${{ secrets.FORGEJO_TOKEN }}
-          VERSION: ${{ github.ref_name }}
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: release-assets
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: release-assets
+
+      - name: List release assets
         run: |
-          curl \
-            --fail \
-            --request POST \
-            --header "Authorization: token ${TOKEN}" \
-            --header "Content-Type: application/json" \
-            --data @- \
-            "${FORGEJO_API_URL}/repos/${GITHUB_REPOSITORY}/releases" <<EOF
-          {
-            "tag_name": "${VERSION}",
-            "name": "${VERSION}",
-            "body": $(jq -Rs . release-notes.md),
-            "draft": false,
-            "prerelease": false
-          }
-          EOF
+          find release-assets -type f -maxdepth 2 -print
+
+      - name: Create Forgejo release
+        uses: actions/forgejo-release@v2
+        with:
+          direction: upload
+          release-dir: release-assets
+          tag: ${{ github.ref_name }}
+          title: ${{ github.ref_name }}
+          body-file: release-notes.md
