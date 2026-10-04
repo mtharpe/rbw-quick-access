@@ -4,8 +4,12 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
  who sold me an M1 Mac Mini to develop this on for like $300.
 """
 
+import plistlib
+from os import getuid
 from pathlib import Path
 from platform import machine
+from shutil import which
+from subprocess import CalledProcessError, run
 from typing import TYPE_CHECKING
 
 import quickmachotkey.constants as c  # type: ignore
@@ -18,6 +22,7 @@ from plat import PlatformHandler
 
 if TYPE_CHECKING:
     from gui import MainWindow
+
 
 # This thing fucking sucks. I hate keybinds.
 MISERABLE_MAPPER = {
@@ -189,6 +194,52 @@ class MacOsPlatformHandler(PlatformHandler):
     def validate(self, key: str) -> bool:
         """Even easier since the mapper has already made our lives miserable enough"""
         return key in MISERABLE_MAPPER
+
+    def configure_startup(self, open_on_startup: bool) -> None:
+        """Sets up how open-on-startup behavior works"""
+
+        # Core paths for **both** install and uninstall
+        domain = f"gui/{getuid()}"
+        launch_dir = Path.home().joinpath("Library").joinpath("LaunchAgents").resolve()
+        launch_dir.mkdir(parents=True, exist_ok=True)
+        plist_path = launch_dir.joinpath("com.oitsjustjose.rbw-quick-access.plist").resolve()
+
+        def __install_launchctl():
+            """Installs the launchctl file and runs the bootstrap"""
+            # We don't want to install if it already exists, so this ensures it definitely doesn't.
+            run(["launchctl", "bootout", domain, plist_path], check=False)
+
+            # Get the executable for the plist file
+            rbw_quick_access = which("rbw-quick-access")
+            if not rbw_quick_access:
+                raise RuntimeError("No rbw-quick-access in the path!")
+
+            # And then let plistlib do the garbage of it all
+            plist = {
+                "Label": "com.oitsjustjose.rbw-quick-access",
+                "ProgramArguments": [rbw_quick_access],
+                "RunAtLoad": True,
+                "KeepAlive": True,
+                "ProcessType": "Interactive",
+            }
+
+            with plist_path.open("wb") as fh:
+                plistlib.dump(plist, fh)
+
+            try:
+                run(["launchctl", "bootstrap", domain, plist_path], check=True)
+            except CalledProcessError as e:
+                print(f"Failed to bootstrap the launchctl: {e}")
+                return
+
+        def __uninstall_launchctl():
+            run(["launchctl", "bootout", domain, plist_path], check=False)
+            plist_path.unlink()
+
+        if open_on_startup:
+            __install_launchctl()
+        else:
+            __uninstall_launchctl()
 
     def __get_virt_key(self) -> c.VirtualKey:
         """Gets the virtual key corresponding to the key trigger"""
