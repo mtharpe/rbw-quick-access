@@ -26,7 +26,7 @@ jobs:
       - name: Build Linux artifact
         run: |
           chmod +x scripts/build.linux.sh
-          scripts/build.linux.sh "${GITHUB_REF_NAME#v}"
+          scripts/build.linux.sh "${FORGEJO_REF_NAME#v}"
 
       - name: Upload Linux artifacts
         uses: https://data.forgejo.org/actions/upload-artifact@v3
@@ -57,7 +57,7 @@ jobs:
         run: |
           source .venv/bin/activate
           chmod +x scripts/build.macos.sh
-          scripts/build.macos.sh "${GITHUB_REF_NAME#v}"
+          scripts/build.macos.sh "${FORGEJO_REF_NAME#v}"
 
       - name: Upload macOS artifacts
         uses: https://data.forgejo.org/actions/upload-artifact@v3
@@ -79,28 +79,34 @@ jobs:
         uses: https://data.forgejo.org/actions/checkout@v6
 
       - name: Create release notes
-        id: changelog
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${FORGEJO_REF_NAME#v}"
 
-          awk -v version="$version" '
-            $0 ~ "^## \\[" version "\\]" {
-              found = 1
-              next
-            }
+          {
+            echo "Released by @${FORGEJO_ACTOR}"
+            echo
+            awk -v version="$version" '
+              $0 ~ "^## \\[" version "\\]" {
+                found = 1
+                next
+              }
 
-            found && /^## \[/ {
-              exit
-            }
+              found && /^## \[/ {
+                exit
+              }
 
-            found {
-              print
-            }
-          ' CHANGELOG.md > release-notes.md
+              found {
+                print
+              }
+            ' CHANGELOG.md
+          } > release-notes.md
 
           echo "Release notes:"
           cat release-notes.md
+
+      - name: Show release notes
+        run: cat release-notes.md
 
       - name: Download macOS artifacts
         uses: https://data.forgejo.org/actions/download-artifact@v3
@@ -123,6 +129,6 @@ jobs:
         with:
           direction: upload
           release-dir: release-assets
-          tag: ${{ github.ref_name }}
-          title: ${{ github.ref_name }}
+          tag: ${{ forgejo.ref_name }}
+          title: ${{ forgejo.ref_name }}
           body-file: release-notes.md
