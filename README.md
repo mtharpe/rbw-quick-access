@@ -2,17 +2,62 @@
 
 This is a tool that aims to replicate 1Password's Quick-Access overlay backed by [`rbw`](https://github.com/doy/rbw).
 
-# Skip straight to the [Downloads](https://git.oitsjustjose.com/me/rbw-quick-access/releases)
-
 # Demo
 
 ![](https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4)
+
+# Installation
+
+## macOS
+
+### Dependencies: [`Homebrew`](https://brew.sh/)
+
+```bash
+# Tap the self-hosted Homebrew repository:
+brew tap oitsjustjose/homebrew \
+ https://git.forgeserv.cloud/oitsjustjose/homebrew.git
+
+# Trust the newly added Homebrew repository:
+brew trust oitsjustjose/homebrew
+```
+
+Finally you can install / update super easily using:
+
+```bash
+brew install oitsjustjose/homebrew/rbw-quick-access
+```
+
+## Linux
+
+### Dependencies: [`rbw`](https://github.com/doy/rbw)
+
+1.  Grab the `linux` build from the [latest release](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/releases/latest)
+2.  Untar the release using `tar -xzvf {file}`
+3.  Finally:
+
+```bash
+cd {extracted directory}
+chmod +x ./install.linux.sh
+./install.linux.sh
+```
+
+## Windows
+
+As of now, Windows is not supported (none of my machines run Windows currently). 
+
+# Post-Install
+
+## `rbw` Configuration
+
+Once you have everything installed, configure `rbw` so it knows where your vault is and who you are with the various options. See the [official `rbw` docs](https://github.com/doy/rbw#configuration) on what config options you have.
+
+**At the very least you must configure `email` with `rbw config set email <your email>`.**
 
 # Limitations
 
 Currently there's one particularly big limitation that I can't fix without killing performance: `rbw` **also shows archived items**. The best route is to make sure your archive isn't massive (mine was in the demo above, as I'd just moved from 1Password and it brought over those items).
 
-If you need to clear out your archived items, you'll have to do it from the Vaultwarden web ui (limited at 500 items at a time), Bitwarden doesn't offer a mass-select-and-trash option. Don't forget to refresh your BItwarden before proceeding.
+If you need to clear out your archived items, you'll have to do it from the Vaultwarden web ui (limited at 500 items at a time), Bitwarden doesn't offer a mass-select-and-trash option. Don't forget to refresh your Bitwarden before proceeding.
 
 # Design Goals
 
@@ -50,36 +95,18 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 -   `ctrl + o` - NOOP; this opens the item in a new window. I don't want to deal with integrating with the BitWarden GUI too...
 -   `ctrl + shift + o` - also NOOP; this opens the item in the full 1Password window, not just the viewer window, and that's just not gonna happen...
 
-# Dependencies
-
-## Linux
-
--   `rbw`
-
-## macOS
-
-**[`brew`](https://brew.sh/) for macOS users**. A custom build of `rbw` is provided with the artifacts (see `rbw/README.md` for more info why).
-
-# Installation
-
-## The Easy Part
-
-Installation is super easy -- download the right file for your distro and machine, untar the file, and run the provided `.sh` script which should handle the installation for you. If you have any issues, let me know -- but please check #Dependencies first and make sure you aren't missing one!
-
-## `rbw` Configuration
-
-Once you have everything installed, configure `rbw` so it knows where your vault is and who you are with the various options. See the [official `rbw` docs](https://github.com/doy/rbw#configuration) on what config options you have, but at the very least you must configure `email` with `rbw config set email <your email>`.
-
 # Milestones:
 
 -   [x] The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spin up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.
 -   [x] ~~Windows~~ & macOS Builds
     -   Skipping Windows for now. I frankly don't feel like it - especially since `rbw` isn't natively supported there. Who knows how painful getting it build with `cargo` .
--   [ ] 1Password's Quick Access clears the search field & results after some given amount of time. It otherwise keeps the previous selection active. I want to implement the same.
--   [ ] Eventually we'll want a configuration screen which:
+-   [x] 1Password's Quick Access clears the search field & results after some given amount of time. It otherwise keeps the previous selection active. I want to implement the same.
+-   [x] Better PinEntry support
+-   [x] Auto-sync from Bitwarden on close
+-   [x] Eventually we'll want a configuration screen which:
     -   [ ] Would allow you to select a vault
     -   [ ] ..or a specific folder
     -   [ ] Change sorting methods (like sorting by most-used)
-    -   [ ] Change the in-app keyboard shortcuts
+    -   [x] Change the in-app keyboard shortcuts
     -   [ ] or the various colors
     -   [ ] or the font
