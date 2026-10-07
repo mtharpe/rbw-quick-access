@@ -7,6 +7,7 @@ Various GUI elements used by other widgets throughout the application
 from collections.abc import Callable
 from threading import Thread
 from typing import TYPE_CHECKING, cast
+from plat import IS_MAC
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtBoundSignal, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QKeySequence
@@ -231,13 +232,20 @@ class HotkeyGuide(QWidget):
         super().__init__()
         self.config = Config.get()
         layout = QHBoxLayout()
-        layout.addWidget(self.__make_guide(self.config.copy_username.serialize(qt_fmt=True), "Copy username"))
-        layout.addWidget(self.__make_guide(self.config.copy_password.serialize(qt_fmt=True), "Copy password"))
-        layout.addWidget(self.__make_guide(self.config.copy_totp.serialize(qt_fmt=True), "Copy totp"))
+
+        layout.addWidget(self.__make_guide(self.config.copy_username.display(), "Copy username"))
+        layout.addWidget(self.__make_guide(self.config.copy_password.display(), "Copy password"))
+        layout.addWidget(self.__make_guide(self.config.copy_totp.display(), "Copy totp"))
+
         self.setLayout(layout)
 
     def __make_guide(self, keybind: str, text: str) -> QWidget:
-        family = QFontInfo(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)).family()
+        if IS_MAC:
+            family = "Helvetica"
+        else:
+            family = QFontInfo(
+                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+            ).family()
 
         lbl = QLabel()
         lbl.setTextFormat(Qt.TextFormat.RichText)
