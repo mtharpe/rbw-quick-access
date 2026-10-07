@@ -5,6 +5,7 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 """
 
 import plistlib
+import sys
 from os import getuid
 from pathlib import Path
 from platform import machine
@@ -116,32 +117,30 @@ MISERABLE_MAPPER = {
     "PageDown": c.kVK_PageDown,
 }
 
-
 def resolve_macos_rbw() -> str:
-    """Resolves the best `rbw` build to use for macOS.
-    Because we might be in-dev, we can't assume that the
-      application is installed in `/opt/rbw-quick-access`,
-      so we check for a dev path first, and go from there.
-
-    Raises:
-        Exception: if no valid `rbw` build could be found.
-
-    Returns:
-        str: The resolved, confirmed existing path for `rbw`
-    """
-    # Remap i386 to x86_64 because nothing else uses i386 >_>
+    """Resolves the best `rbw` build to use for macOS."""
     arch = "x86_64" if machine() == "i386" else machine()
-    #     We use `..` here because we'll be in `src` when doing local dev
-    #                  vv
-    dev_build = Path(f"../rbw/{arch}/rbw")
+
+# PyInstaller build: rbw is bundled in the rbw directory next to the executable.
+    if getattr(sys, "frozen", False):
+        bundled_build = Path(sys.executable).parent / "rbw" / "rbw"
+        if bundled_build.exists():
+            return str(bundled_build)
+
+    # Local development
+    dev_build = Path(__file__).resolve().parent.parent.parent / "rbw" / arch / "rbw"
     if dev_build.exists():
         return str(dev_build)
 
+    # System fallback
     release_build = Path("/usr/local/bin/rbw")
     if release_build.exists():
         return str(release_build)
 
-    raise Exception(f"Failed to find a valid `rbw` binary!! Checked {dev_build} and {release_build}")  # noqa: TRY002
+    raise Exception(
+        f"Failed to find a valid `rbw` binary. "
+        f"Checked {bundled_build}, {dev_build}, and {release_build}"
+    )
 
 
 class MacOsPlatformHandler(PlatformHandler):

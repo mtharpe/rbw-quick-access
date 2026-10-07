@@ -80,6 +80,38 @@ class Keybind(BaseModel):
             )
         )
 
+    def display(self) -> str:
+        """Returns a user-facing representation of the keybind."""
+        if IS_MAC:
+            parts = []
+
+            if self.ctrl:
+                parts.append("⌃")
+
+            if self.alt:
+                parts.append("⌥")
+
+            if self.meta:
+                parts.append("⌘")
+
+            if self.shift:
+                parts.append("⇧")
+
+            trigger = self.trigger.upper()
+
+            if trigger == "ENTER":
+                trigger = "↩"
+            elif trigger == "SPACE":
+                trigger = "Space"
+            elif trigger == "ESCAPE":
+                trigger = "Esc"
+
+            parts.append(trigger)
+
+            return "".join(parts)
+
+        return self.serialize()
+
     def qt_matches(self, combo: QKeyCombination) -> bool:
         """Determines if a given key combination matches this keybind
 
