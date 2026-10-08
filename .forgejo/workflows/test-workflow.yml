@@ -1,0 +1,22 @@
+name: Cross-Repo Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  homebrew-update:
+    # This can be any runner really.
+    runs-on: linux-x86
+
+    needs:
+      - release
+
+    steps:
+      - name: Trigger Workflow
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ env.FORGEJO_TOKEN }}" \
+          -H "Accept: application/json" \
+          -H "Content-Type: application/json" \
+          "https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update/dispatches" \
+          -d '{"ref":"${{ env.FORGEJO_REF }}"}'
