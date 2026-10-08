@@ -13,7 +13,7 @@ This is a tool that aims to replicate 1Password's Quick-Access overlay backed by
 ```bash
 # Tap the self-hosted Homebrew repository:
 brew tap oitsjustjose/homebrew \
- https://git.forgeserv.cloud/oitsjustjose/homebrew.git
+ https://git.forgeserv.cloud/oitsjustjose/brew.git
 
 # Trust the newly added Homebrew repository:
 brew trust oitsjustjose/homebrew
