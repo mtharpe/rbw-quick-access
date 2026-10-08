@@ -18,6 +18,7 @@ QHBoxLayout {
     background-color: #414868;
 }
 
+QDialog,
 QMainWindow {
     background-color: #16161e;
 }

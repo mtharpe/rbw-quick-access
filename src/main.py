@@ -11,7 +11,7 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
 from gui import MainWindow
-from gui.elements import YesNoDialog
+from gui.elements import DismissableDialog
 from rbw import RbwNotFoundException
 from style import DEFAULT_STYLE
 
@@ -27,28 +27,46 @@ def main():
     app.setApplicationName("rbw-quick-access")
     app.setStyleSheet(DEFAULT_STYLE)
 
-    window = MainWindow()
-    window.setMinimumHeight(0)
-
-    app.focusWindowChanged.connect(window.on_focus_window_changed)
-
-    # Since the app is stuck in an `exec` loop and the `hotkey` embedded loop
-    # in the MainWindow is running, we need to handle SIGINT differently. Ugh.
-    signal(SIGINT, lambda *_: app.quit())
-    # Apparently this is the QT-styled way of handling this? Gross.
-    #  The logic is, this timer causes QT to come back from C++ land and
-    #  notice that the app was told to quit in the SIGINT handler above.
-    # It's not obvious anywhere, but this timer *loops*. It's otherwise NOOP
-    timer = QTimer()
-    timer.timeout.connect(lambda: None)
-    timer.start(100)
-
     try:
+        window = MainWindow()
+        window.setMinimumHeight(0)
+
+        app.focusWindowChanged.connect(window.on_focus_window_changed)
+
+        # Since the app is stuck in an `exec` loop and the `hotkey` embedded loop
+        # in the MainWindow is running, we need to handle SIGINT differently. Ugh.
+        signal(SIGINT, lambda *_: app.quit())
+        # Apparently this is the QT-styled way of handling this? Gross.
+        #  The logic is, this timer causes QT to come back from C++ land and
+        #  notice that the app was told to quit in the SIGINT handler above.
+        # It's not obvious anywhere, but this timer *loops*. It's otherwise NOOP
+        timer = QTimer()
+        timer.timeout.connect(lambda: None)
+        timer.start(100)
+
         app.exec()
     except RbwNotFoundException:
-        dlg = YesNoDialog(window, "Failed to find `rbw`!", "`rbw` could not be found. Restart to see if `rbw` can be found now?")
-        if dlg.exec():
-            window.plat_handler.restart_app()
+        dlg = DismissableDialog(
+            None,
+            "Failed to find rbw!",
+            """
+            <style>
+                code {
+                    background-color: #1a1b26; 
+                    color: #f7768e; 
+                    border-radius: 8px; 
+                    padding: 8px;
+                }
+            </style>
+            
+            <div style="color: #c0caf5; font-size: 20px; text-align: center;">
+                The <code>rbw</code> executable could not be found. Install and add it to your <code>PATH</code>, then restart <code>rbw-quick-access</code>.
+            </div>
+            """,
+        )
+        dlg.setStyleSheet(DEFAULT_STYLE)
+        dlg.exec()
+        app.quit()
 
 
 if __name__ == "__main__":
