@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2] - 2026-10-08
+
+This is a macOS-specific fix for the new "Failed to find rbw!" pop-up.
+
+### Fixed:
+
+-   Attempted to fix macOS users seeing new error popup when it's actually incorrect (Fixes [#2](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/issues/2))
+    -   Done by updating the `launchctl` file to use `/opt/homebrew/bin:$PATH` for the environment, despite Homebrew having symlinked `rbw` and `rbw-agent`
+
 ## [1.0.1] - 2026-10-07
 
 Thanks to [@Omer-Bera](https://git.forgeserv.cloud/Omer-Bera) for the PR to fix various macOS errors and inconsistencies!
