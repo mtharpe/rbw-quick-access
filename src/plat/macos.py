@@ -5,10 +5,8 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 """
 
 import plistlib
-import sys
 from os import getuid
 from pathlib import Path
-from platform import machine
 from shutil import which
 from subprocess import CalledProcessError, run
 from typing import TYPE_CHECKING
@@ -116,31 +114,6 @@ MISERABLE_MAPPER = {
     "PageUp": c.kVK_PageUp,
     "PageDown": c.kVK_PageDown,
 }
-
-def resolve_macos_rbw() -> str:
-    """Resolves the best `rbw` build to use for macOS."""
-    arch = "x86_64" if machine() == "i386" else machine()
-
-# PyInstaller build: rbw is bundled in the rbw directory next to the executable.
-    if getattr(sys, "frozen", False):
-        bundled_build = Path(sys.executable).parent / "rbw" / "rbw"
-        if bundled_build.exists():
-            return str(bundled_build)
-
-    # Local development
-    dev_build = Path(__file__).resolve().parent.parent.parent / "rbw" / arch / "rbw"
-    if dev_build.exists():
-        return str(dev_build)
-
-    # System fallback
-    release_build = Path("/usr/local/bin/rbw")
-    if release_build.exists():
-        return str(release_build)
-
-    raise Exception(
-        f"Failed to find a valid `rbw` binary. "
-        f"Checked {bundled_build}, {dev_build}, and {release_build}"
-    )
 
 
 class MacOsPlatformHandler(PlatformHandler):
