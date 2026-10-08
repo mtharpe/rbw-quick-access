@@ -8,7 +8,6 @@ import json
 from dataclasses import dataclass
 from shutil import which
 from subprocess import PIPE, CalledProcessError, run
-from threading import Thread
 
 
 class RbwNotFoundException(Exception):
