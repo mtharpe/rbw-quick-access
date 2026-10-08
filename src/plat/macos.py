@@ -5,7 +5,7 @@ Various macOS-specific handlers and helpers. Shout-out to the guy
 """
 
 import plistlib
-from os import getuid
+from os import environ, getuid
 from pathlib import Path
 from shutil import which
 from subprocess import CalledProcessError, run
@@ -193,6 +193,7 @@ class MacOsPlatformHandler(PlatformHandler):
                 "RunAtLoad": True,
                 "KeepAlive": True,
                 "ProcessType": "Interactive",
+                "Environment": {"PATH": f"/opt/homebrew/bin:{environ.get('PATH', '')}"},
             }
 
             with plist_path.open("wb") as fh:
