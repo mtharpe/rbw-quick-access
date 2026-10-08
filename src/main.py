@@ -11,6 +11,8 @@ from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
 from gui import MainWindow
+from gui.elements import YesNoDialog
+from rbw import RbwNotFoundException
 from style import DEFAULT_STYLE
 
 
@@ -41,7 +43,12 @@ def main():
     timer.timeout.connect(lambda: None)
     timer.start(100)
 
-    app.exec()
+    try:
+        app.exec()
+    except RbwNotFoundException:
+        dlg = YesNoDialog(window, "Failed to find `rbw`!", "`rbw` could not be found. Restart to see if `rbw` can be found now?")
+        if dlg.exec():
+            window.plat_handler.restart_app()
 
 
 if __name__ == "__main__":
