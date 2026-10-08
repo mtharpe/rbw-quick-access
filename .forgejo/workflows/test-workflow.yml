@@ -8,8 +8,8 @@ jobs:
     # This can be any runner really.
     runs-on: linux-x86
 
-    needs:
-      - release
+    # needs:
+    #   - release
 
     steps:
       - name: Trigger Workflow
