@@ -310,7 +310,7 @@ class KeybindEditor(QKeySequenceEdit):
 
 
 class DismissableDialog(QDialog):
-    def __init__(self, parent: QWidget, title: str, msg: str):
+    def __init__(self, parent: QWidget | None, title: str, msg: str):
         super().__init__(parent)
         self.setWindowTitle(title)
 
@@ -325,7 +325,7 @@ class DismissableDialog(QDialog):
 
 
 class YesNoDialog(QDialog):
-    def __init__(self, parent: QWidget, title: str, msg: str):
+    def __init__(self, parent: QWidget | None, title: str, msg: str):
         super().__init__(parent)
         self.setWindowTitle(title)
 
