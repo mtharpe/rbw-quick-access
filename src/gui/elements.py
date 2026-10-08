@@ -7,7 +7,6 @@ Various GUI elements used by other widgets throughout the application
 from collections.abc import Callable
 from threading import Thread
 from typing import TYPE_CHECKING, cast
-from plat import IS_MAC
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtBoundSignal, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QKeySequence
@@ -32,6 +31,7 @@ from PyQt6.QtWidgets import (
 
 import rbw
 from config import Config, Keybind
+from plat import IS_MAC
 from rbw import BitwardenEntry
 
 if TYPE_CHECKING:
@@ -243,9 +243,7 @@ class HotkeyGuide(QWidget):
         if IS_MAC:
             family = "Helvetica"
         else:
-            family = QFontInfo(
-                QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
-            ).family()
+            family = QFontInfo(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)).family()
 
         lbl = QLabel()
         lbl.setTextFormat(Qt.TextFormat.RichText)
