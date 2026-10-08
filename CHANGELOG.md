@@ -20,7 +20,7 @@ Thanks to [@Omer-Bera](https://git.forgeserv.cloud/Omer-Bera) for the PR to fix 
     -   You can set this setting using `rbw config set sync_interval {time_seconds}`
 -   Changed how the `rbw` executable is located
     -   If it can't be found, you can install it at this point
-    -   A pop-up is shown asking if you'd like to restart, such that `rbw` can be re-resolved from an updated `PATH` variable.
+    -   A pop-up is shown telling you it can't be found. On Linux, you'll know what to do to restart the application. On macOS, Homebrew should've already installed `rbw` as a dependency.
 
 ## [1.0.0] - 2026-10-04
 
