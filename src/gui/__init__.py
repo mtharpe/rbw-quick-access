@@ -60,6 +60,8 @@ class MainWindow(QMainWindow):
         self.resize(self.width(), qa_layout.sizeHint().height())
         # Wait to configure the window until other QT configuration has been completed
         self.plat_handler.configure_window()
+        # Log in to trigger a pinentry window
+        rbw.login()
 
     def on_focus_window_changed(self, window: QWindow | None):
         """Called when the focused application has been changed
@@ -114,7 +116,6 @@ class MainWindow(QMainWindow):
         """
         self.__hidden_at = dt.now(tz=timezone.utc)
         self.plat_handler.on_hide()
-        rbw.sync()
         return super().hideEvent(a0)
 
     def changeEvent(self, a0: QEvent | None) -> None:
@@ -232,7 +233,7 @@ class MainWindow(QMainWindow):
 
     def block_until_unlock(self):
         """
-        Blocks the main thread until RBW has been unlocked
+        Blocks the main thread until RBW has been logged in and unlocked
 
         This is done to prevent each typed character from triggering
             a new unlock, thus triggering a new pinentry window to
