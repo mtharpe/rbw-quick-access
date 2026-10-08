@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.1] - 2026-10-07
+
+Thanks to [@Omer-Bera](https://git.forgeserv.cloud/Omer-Bera) for the PR to fix various macOS errors and inconsistencies!
+
+### Fixed:
+
+-   Add a separate user-facing keybind representation for macOS, so shortcuts are shown using native symbols like ⌘ and ⇧ without changing the Qt matching logic.
+    -   Keeps the existing shortcut display behavior on non-macOS platforms.
+-   Use Helvetica for shortcut badges on macOS for more consistent rendering of modifier symbols.
+-   Add the missing quickmachotkey dependency for macOS builds.
+    -   Fixes 1.0.0's launch startup failure
+-   Call `rbw login` on application startup to trigger the `pinentry` popup to unlock Bitwarden
+
+### Changed
+
+-   Removed the `rbw sync` on close, since `rbw` already syncs on a regular basis
+    -   By default, `rbw` syncs with Vaultwarden every 1 hour
+    -   You can set this setting using `rbw config set sync_interval {time_seconds}`
+-   Changed how the `rbw` executable is located
+    -   If it can't be found, you can install it at this point
+    -   A pop-up is shown asking if you'd like to restart, such that `rbw` can be re-resolved from an updated `PATH` variable.
+
 ## [1.0.0] - 2026-10-04
 
 Alright, I've been using this tool on macOS and Linux for weeks now, I think it's time to call this an official 1.0.0 release! Just bugfixes that I've been noting as I use it:
