@@ -12,15 +12,12 @@ jobs:
     #   - release
 
     steps:
-      - name: Echo ephemeral token
-        run: echo '${{ env.FORGEJO_TOKEN }}'
-
       - name: Trigger Workflow
         run: |
           curl -X 'POST' \
             'https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update.yaml/dispatches' \
             -H 'accept: application/json' \
-            -H 'Authorization: token ${{ env.FORGEJO_TOKEN }}' \
+            -H 'Authorization: token ${{ secrets.PAT }}' \
             -H 'Content-Type: application/json' \
             -d '{
               "ref": "main",
