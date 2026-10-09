@@ -5,12 +5,11 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
-
 DOWNLOAD_DIR="$(mktemp -d)"
 
-echo "Downloading to $DOWNLOAD_DIR"
-
 download() {
+    echo -n "Downloading latest release of rbw-quick-access from git..."
+
     latest_endpoint="https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/rbw-quick-access/releases/latest"
 
     if ! command -v jq > /dev/null 2>&1; then
@@ -41,6 +40,7 @@ download() {
         wget -O "$DOWNLOAD_DIR/rbw-quick-access.tar.gz" "$dl_url"
     fi
 
+    echo "      Done!"
     return 0
 }
 
@@ -55,16 +55,13 @@ install() {
     # Make `/opt` dir, copy things over to it
     sudo mkdir -p "$INSTALL_DIR"
 
-    echo "Extracting files"
+    echo -n "Extracting and copying files..."
     sh -c "cd $DOWNLOAD_DIR && tar -xzvf rbw-quick-access.tar.gz > /dev/null 2>&1"
-
-    echo "Copying files.."
     sudo cp -a "$DOWNLOAD_DIR/rbw-quick-access/rbw-quick-access" "$INSTALL_DIR"
     sudo cp -a "$DOWNLOAD_DIR/rbw-quick-access/_internal" "$INSTALL_DIR"
-
     # Finally make a symlink to the `/opt` exec in /usr/local/bin
     sudo ln -sf "$INSTALL_DIR/rbw-quick-access" /usr/local/bin/rbw-quick-access
-    echo "Symlink made"
+    echo "      Done!"
     
     return 0
 }
@@ -140,10 +137,11 @@ register_init() {
         fi
     }
 
-    !(systemd || openrc || runit) && fallback && finalize
+    !(systemd || openrc || runit) && fallback
     
+    finalize    
     return 0
 }
 
-download && install && register_init && echo "Installed successfully!"
+download && install && register_init && echo "Installation complete!"
 
