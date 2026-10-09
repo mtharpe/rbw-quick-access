@@ -17,8 +17,6 @@ python -m PyInstaller \
     --name rbw-quick-access \
     src/main.py
 
-# Copy the installation script to the build dir
-cp scripts/install.linux.sh build/dist/rbw-quick-access
 # And finally tar everything up for release. We `cd` into
 #  build to avoid the untar'd path to start with build/
 tar -zcvf $artifact_name -C build/dist rbw-quick-access 
