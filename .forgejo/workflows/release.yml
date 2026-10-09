@@ -132,3 +132,23 @@ jobs:
           tag: ${{ forgejo.ref_name }}
           title: ${{ forgejo.ref_name }}
           release-notes-file: release-notes.md
+
+  homebrew-update:
+    # This can be any runner really.
+    runs-on: linux-x86
+
+    needs:
+      - release
+
+    steps:
+      - name: Trigger Workflow
+        run: |
+          curl -X 'POST' \
+            'https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update.yaml/dispatches' \
+            -H 'accept: application/json' \
+            -H 'Authorization: token ${{ secrets.PAT }}' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "ref": "main",
+              "return_run_info": true
+            }'
