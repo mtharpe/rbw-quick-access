@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-10-09
+
+This update brings a [fully automated install script](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/#automatic-installer) for Linux users, which adds support for `openrc` and `runit`.
+
+No other code changes for this one - sorry folks!
+
 ## [1.0.2] - 2026-10-08
 
 This is a macOS-specific fix for the new "Failed to find rbw!" pop-up.
