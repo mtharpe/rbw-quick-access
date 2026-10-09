@@ -29,15 +29,22 @@ brew install oitsjustjose/homebrew/rbw-quick-access
 
 ### Dependencies: [`rbw`](https://github.com/doy/rbw)
 
-1.  Grab the `linux` build from the [latest release](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/releases/latest)
-2.  Untar the release using `tar -xzvf {file}`
-3.  Finally:
+#### Automatic Installer
+
+This script automatically grabs the latest release and can be re-run whenever you'd like to update. It's compatible with `systemd`, and it _should_ be compatible with `OpenRC` and `runit`, but I don't have machines with either so I went off documentation alone. **The installer requires `jq` and either `curl` or `wget`**
 
 ```bash
-cd {extracted directory}
-chmod +x ./install.linux.sh
-./install.linux.sh
+curl -sL https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/raw/branch/main/scripts/install.linux.sh | sh
+# or for wget users:
+wget -q -O - https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/raw/branch/main/scripts/install.linux.sh | sh
 ```
+
+#### Manual Installation
+
+1.  Grab the `linux` build from the [latest release](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/releases/latest)
+2.  Untar the release using `tar -xzvf {file}`
+3.  Move `rbw-quick-access` and `_internal` to some shared directory (like `/opt/rbw-quick-access`).
+4.  Set it up however you like with your `init` system of choice!
 
 ## Windows
 
@@ -101,10 +108,12 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 -   [x] 1Password's Quick Access clears the search field & results after some given amount of time. It otherwise keeps the previous selection active. I want to implement the same.
 -   [x] Better PinEntry support
 -   [x] Auto-sync from Bitwarden on close
+-   [x] Homebrew support
+-   [x] CI/CD for releases
 -   [x] Eventually we'll want a configuration screen which:
-    -   [ ] Would allow you to select a vault
-    -   [ ] ..or a specific folder
-    -   [ ] Change sorting methods (like sorting by most-used)
+    -   [ ] ~~Would allow you to select a vault~~
+    -   [ ] ~~..or a specific folder~~
+    -   [ ] ~~Change sorting methods (like sorting by most-used)~~
     -   [x] Change the in-app keyboard shortcuts
-    -   [ ] or the various colors
-    -   [ ] or the font
+    -   [ ] Change each pre-set colors in the GUI
+    -   [ ] Change the GUI font selection
