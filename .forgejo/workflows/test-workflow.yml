@@ -12,6 +12,9 @@ jobs:
     #   - release
 
     steps:
+      - name: Echo ephemeral token
+        run: echo '${{ env.FORGEJO_TOKEN }}'
+
       - name: Trigger Workflow
         run: |
           curl -X 'POST' \
