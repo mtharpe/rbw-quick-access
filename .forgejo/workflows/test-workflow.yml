@@ -14,9 +14,12 @@ jobs:
     steps:
       - name: Trigger Workflow
         run: |
-          curl -X POST \
-          -H "Authorization: token ${{ env.FORGEJO_TOKEN }}" \
-          -H "Accept: application/json" \
-          -H "Content-Type: application/json" \
-          "https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update.yaml/dispatches" \
-          -d '{"ref":"${{ env.FORGEJO_REF }}", "return_run_info": true}'
+          curl -X 'POST' \
+            'https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update.yaml/dispatches' \
+            -H 'accept: application/json' \
+            -H 'Authorization: token ${{ env.FORGEJO_TOKEN }}' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "ref": "main",
+              "return_run_info": true
+            }'
