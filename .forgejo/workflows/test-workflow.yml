@@ -19,4 +19,4 @@ jobs:
           -H "Accept: application/json" \
           -H "Content-Type: application/json" \
           "https://git.forgeserv.cloud/api/v1/repos/oitsjustjose/brew/actions/workflows/update.yaml/dispatches" \
-          -d '{"ref":"${{ env.FORGEJO_REF }}"}'
+          -d '{"ref":"${{ env.FORGEJO_REF }}", "return_run_info": true}'
