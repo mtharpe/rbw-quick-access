@@ -6,7 +6,6 @@ The core GUI elements for the application
 
 import webbrowser
 from datetime import datetime as dt
-from datetime import timezone
 from time import sleep
 
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
@@ -27,7 +26,7 @@ class MainWindow(QMainWindow):
         self.__selection: BitwardenEntry | None = None
         self.__config = Config.get()
         self.__settings_open = False
-        self.__hidden_at = dt.fromtimestamp(0, tz=timezone.utc)
+        self.__hidden_at = dt.fromtimestamp(0)
 
         self.plat_handler = get_platform_handler(self)
         self.plat_handler.on_show_signal.connect(self.show_and_activate)
@@ -86,7 +85,7 @@ class MainWindow(QMainWindow):
 
         # If it's been more than 30 seconds since you hid the window,
         #  set up the state to start typing fresh again
-        if (dt.now(tz=timezone.utc) - self.__hidden_at).seconds >= 30:
+        if (dt.now() - self.__hidden_at).seconds >= 30:
             self.results_widget.unfocus()
             self.search_widget.setFocus()
             self.search_widget.selectAll()
@@ -114,22 +113,9 @@ class MainWindow(QMainWindow):
         Args:
             a0 (QShowEvent | None): The event in (unused - passed to super)
         """
-        self.__hidden_at = dt.now(tz=timezone.utc)
+        self.__hidden_at = dt.now()
         self.plat_handler.on_hide()
         return super().hideEvent(a0)
-
-    def changeEvent(self, a0: QEvent | None) -> None:
-        """Called when the QWidget focus is changed. In our case we use it
-        to ensure that we hide the window when it's lost focus.
-
-        Args:
-            a0 (QEvent | None): The event in
-        """
-
-        if a0 and a0.type() == QEvent.Type.WindowDeactivate:
-            print("Hi")
-
-        return super().changeEvent(a0)
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         """Overrides the generalized keyPressEvent to handle it ourselves after super() is called
@@ -250,6 +236,7 @@ class SettingsWidget(QWidget):
         super().__init__(parent)
         self.main_window = parent
         self.__config = Config.get()
+        self.__startup_setting_holder = False
 
         custom_font = QFont()
         custom_font.setPixelSize(24)
@@ -328,14 +315,13 @@ class SettingsWidget(QWidget):
 
     def on_open_at_startup_changed(self, new_state: Qt.CheckState):
         """Called when the checkbox for "Open at Startup" is changed"""
-        self.__open_at_startup_tmp = new_state != Qt.CheckState.Unchecked
+        self.__startup_setting_holder = new_state != Qt.CheckState.Unchecked
 
     def on_save_pressed(self):
         """Called when the Save button has been pressed"""
         # Handle the temporary, stored startup button state.
-        if self.__open_at_startup_tmp != self.__config.open_at_startup:
-            self.__config.open_at_startup = self.__open_at_startup_tmp
-            del self.__open_at_startup_tmp
+        if self.__config.open_at_startup != self.__startup_setting_holder:
+            self.__config.open_at_startup = self.__startup_setting_holder
             self.main_window.plat_handler.configure_startup(self.__config.open_at_startup)
 
         self.__config.save()

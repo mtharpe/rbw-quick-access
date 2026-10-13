@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-10-12
+
+### Fixed:
+
+-   (All Platforms) Fixed crash on saving settings
+
 ## [1.0.3] - 2026-10-09
 
 This update brings a [fully automated install script](https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/#automatic-installer) for Linux users, which adds support for `openrc` and `runit`.

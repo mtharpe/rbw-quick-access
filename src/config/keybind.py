@@ -22,18 +22,7 @@ class Keybind(BaseModel):
 
     # Use a private attribute for UI-only state so it doesn't
     # leak into the JSON during model_dump()
-    _uncommitted = None
-
-    # def __init__(self, trigger: str, ctrl: bool = False, alt: bool = False, meta: bool = False, shift: bool = False):
-    #     super().__init__()
-    #     self.trigger = trigger
-    #     self.ctrl = ctrl
-    #     self.alt = alt
-    #     self.meta = meta
-    #     self.shift = shift
-
-    #     # The uncommitted, changed keybind, so it can be restored later
-    #     self.uncommitted: Keybind | None = None
+    _uncommitted: "Keybind | None" = None
 
     @staticmethod
     def deserialize(text_repr: str) -> "Keybind":
