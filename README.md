@@ -48,7 +48,11 @@ wget -q -O - https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access/raw/branc
 
 ## Windows
 
-As of now, Windows is not supported (none of my machines run Windows currently). 
+### 🚫 Windows is not and will not be supported 🚫
+
+While this is partially a personal decision (all of my daily-drivers run Linux), the fundamental issue is that `rbw` is built for and around `POSIX` systems.
+
+I could, theoretically, write a botched version of `rbw-quick-access` using the `bw` cli, but to be frank the `bw` cli isn't nearly as performant and requires a your vault key every time you list/get/search in it.
 
 # Post-Install
 
@@ -102,18 +106,8 @@ After 8 years with this system, the keyboard shortcuts were pretty well engraine
 
 # Milestones:
 
--   [x] The next big milestone is to re-architect the app such that it stays alive between launches, such that running `rbw-quick-access --show` (or something to that effect) will spin up a singleton if it isn't running, and shows it. This would mean a single binary file is all I'd need to distribute and would make installation easier.
--   [x] ~~Windows~~ & macOS Builds
-    -   Skipping Windows for now. I frankly don't feel like it - especially since `rbw` isn't natively supported there. Who knows how painful getting it build with `cargo` .
--   [x] 1Password's Quick Access clears the search field & results after some given amount of time. It otherwise keeps the previous selection active. I want to implement the same.
--   [x] Better PinEntry support
--   [x] Auto-sync from Bitwarden on close
--   [x] Homebrew support
--   [x] CI/CD for releases
--   [x] Eventually we'll want a configuration screen which:
-    -   [ ] ~~Would allow you to select a vault~~
-    -   [ ] ~~..or a specific folder~~
-    -   [ ] ~~Change sorting methods (like sorting by most-used)~~
-    -   [x] Change the in-app keyboard shortcuts
-    -   [ ] Change each pre-set colors in the GUI
-    -   [ ] Change the GUI font selection
+-   [ ] Improved settings GUI
+-   [ ] Customization
+    -   [ ] Color Themes
+    -   [ ] Advanced color customization (pick your own hex, etc.)
+    -   [ ] Font selections (for `gui.SearchResults`, `gui.HotkeyGuide`, and general text throughout the GUI)
