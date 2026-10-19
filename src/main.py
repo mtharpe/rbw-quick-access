@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QApplication
 
 from gui import MainWindow
 from gui.elements import DismissableDialog
+from instance import InstanceServer, notify_running
 from rbw import RbwNotFoundException
 from style import DEFAULT_STYLE
 
@@ -25,13 +26,24 @@ def main():
 
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
+    app.setDesktopFileName("rbw-quick-access")
     app.setStyleSheet(DEFAULT_STYLE)
+
+    # Already running: have that instance show itself instead
+    if notify_running():
+        return
 
     try:
         window = MainWindow()
         window.setMinimumHeight(0)
 
         app.focusWindowChanged.connect(window.on_focus_window_changed)
+
+        instance_server = InstanceServer(app)
+        instance_server.show_requested.connect(window.show_and_activate)
+        # `--background` starts hidden (e.g. at login); otherwise a launch means "show me"
+        if "--background" not in argv:
+            window.show_and_activate()
 
         # Since the app is stuck in an `exec` loop and the `hotkey` embedded loop
         # in the MainWindow is running, we need to handle SIGINT differently. Ugh.

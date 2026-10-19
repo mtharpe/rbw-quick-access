@@ -1,5 +1,14 @@
 # RBW Quick Access
 
+> **Fork note (mtharpe):** this fork is reworked for GNOME on Wayland. The Linux global
+> hotkey no longer reads every keyboard from `/dev/input` (which needed the `input` group).
+> Instead, bind a desktop shortcut to `rbw-quick-access`: the first launch starts it, and
+> later launches show the running window. Copying goes through the app's own clipboard
+> instead of `rbw get --clipboard`. Needs rbw 1.14+ (for `rbw search --raw`), PyQt6,
+> pydantic and platformdirs; it runs from source with `python3 src/main.py`
+> (`--background` starts it hidden). Upstream:
+> https://git.forgeserv.cloud/oitsjustjose/rbw-quick-access
+
 [**Demo**](https://stuff.forgeserv.cloud/Jose's%20Stuff/Screenshots/2026-09-05_09%3A01%3A32PM.mp4)
 
 This is a tool that aims to replicate 1Password's Quick-Access overlay backed by [`rbw`](https://github.com/doy/rbw).

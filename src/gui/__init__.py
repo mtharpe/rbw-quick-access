@@ -10,7 +10,7 @@ from time import sleep
 
 from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
-from PyQt6.QtWidgets import QCheckBox, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
 from config import Config, Keybind
@@ -81,7 +81,9 @@ class MainWindow(QMainWindow):
 
         # Perform the platform-specific activation **first**
         self.plat_handler.on_show()
-        self.block_until_unlock()
+        if not self.block_until_unlock():
+            self.hide()
+            return
 
         # If it's been more than 30 seconds since you hid the window,
         #  set up the state to start typing fresh again
@@ -170,17 +172,17 @@ class MainWindow(QMainWindow):
 
             if self.__config.copy_username.qt_matches(a0.keyCombination()):
                 if sel.user:
-                    rbw.copy_username(sel)
+                    self.copy_to_clipboard(sel.user)
                 self.hide()
                 return True
 
             if self.__config.copy_password.qt_matches(a0.keyCombination()):
-                rbw.copy_password(sel)
+                self.copy_to_clipboard(rbw.get_field(sel, "password"))
                 self.hide()
                 return True
 
             if self.__config.copy_totp.qt_matches(a0.keyCombination()):
-                rbw.copy_totp(sel)
+                self.copy_to_clipboard(rbw.get_field(sel, "totp"))
                 self.hide()
                 return True
 
@@ -192,6 +194,18 @@ class MainWindow(QMainWindow):
             return a0.accept()
         # Only call super when we didn't do something special
         super().keyPressEvent(a0)
+
+    def copy_to_clipboard(self, value: str | None) -> None:
+        """Puts a value on the clipboard. Done while the window still has focus, since Wayland
+        only lets the focused window set the clipboard; this process stays running, so the
+        contents stay available after the window hides.
+
+        Args:
+            value (str | None): The value to copy; nothing happens if it's None
+        """
+        clipboard = QApplication.clipboard()
+        if value is not None and clipboard:
+            clipboard.setText(value)
 
     def on_results_ready(self, data: tuple[int, list[BitwardenEntry] | None]):
         """Takes the new search results and updates the results widget
@@ -217,16 +231,23 @@ class MainWindow(QMainWindow):
         """
         self.__selection = selection
 
-    def block_until_unlock(self):
+    def block_until_unlock(self) -> bool:
         """
         Blocks the main thread until RBW has been logged in and unlocked
 
         This is done to prevent each typed character from triggering
             a new unlock, thus triggering a new pinentry window to
             spawn for each character input while not unlocked.
+
+        Returns:
+            bool: True once unlocked, False if the unlock was cancelled or failed
         """
-        while not rbw.unlock():
+        # One retry covers a stale agent; past that, a cancelled pinentry shouldn't respawn forever
+        for _ in range(2):
+            if rbw.unlock():
+                return True
             sleep(0.1)
+        return False
 
 
 class SettingsWidget(QWidget):
@@ -252,9 +273,12 @@ class SettingsWidget(QWidget):
         """REGION: Keybind Grid"""
         keybind_grid = QGridLayout()
         # Go through each label and KeybindChanger and configure it into an evenly spaced grid
+        # On Linux the desktop owns the show shortcut (it runs `rbw-quick-access`), so only the
+        #  in-window keys are editable here
+        show_editor = [] if IS_LINUX else [("Show Window", KeybindEditor(self, self.__config.show, self.on_show_key_changed, self.cancel_pressed))]
         for row, (label, editor) in enumerate(
             [
-                ("Show Window", KeybindEditor(self, self.__config.show, self.on_show_key_changed, self.cancel_pressed)),
+                *show_editor,
                 ("Open Item in Browser", KeybindEditor(self, self.__config.open_in_browser, self.on_key_changed, self.cancel_pressed)),
                 ("Copy Username", KeybindEditor(self, self.__config.copy_username, self.on_key_changed, self.cancel_pressed)),
                 ("Copy Password", KeybindEditor(self, self.__config.copy_password, self.on_key_changed, self.cancel_pressed)),

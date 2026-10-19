@@ -72,25 +72,22 @@ def search(query: str, limit: int | None = None) -> list[BitwardenEntry] | None:
         return None
 
 
-def copy_username(entry: BitwardenEntry):
+def get_field(entry: BitwardenEntry, field: str) -> str | None:
+    """Reads one field of an entry. The caller puts it on the clipboard: `rbw get --clipboard`
+    exits right away, and on Linux its clipboard contents can go with it.
+
+    Args:
+        entry (BitwardenEntry): The entry to read
+        field (str): The field to read, e.g. "username", "password" or "totp"
+
+    Returns:
+        str | None: The value, or None if rbw failed or the field is empty
+    """
     try:
-        run([__get_rbw(), "get", entry.id, "--field", "username", "--clipboard"], check=True)
+        output = run([__get_rbw(), "get", entry.id, "--field", field], stdout=PIPE, check=True).stdout.decode("utf-8")
+        return output.rstrip("\n") or None
     except CalledProcessError:
-        return
-
-
-def copy_password(entry: BitwardenEntry):
-    try:
-        run([__get_rbw(), "get", entry.id, "--field", "password", "--clipboard"], check=True)
-    except CalledProcessError:
-        return
-
-
-def copy_totp(entry: BitwardenEntry):
-    try:
-        run([__get_rbw(), "get", entry.id, "--field", "totp", "--clipboard"], check=True)
-    except CalledProcessError:
-        return
+        return None
 
 
 def login():
