@@ -13,6 +13,7 @@ from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
 from PyQt6.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
 import rbw
+import style
 from config import Config, Keybind
 from gui.elements import DismissableDialog, DynamicStackedWidget, HotkeyGuide, KeybindEditor, SearchBox, SearchResults, YesNoDialog
 from plat import IS_LINUX, get_platform_handler
@@ -49,6 +50,9 @@ class MainWindow(QMainWindow):
         self.settings_view = SettingsWidget(self)
 
         self.views = DynamicStackedWidget()
+        # Styled as the rounded window card (see style.py); the window itself is transparent
+        self.views.setObjectName("card")
+        self.views.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.views.addWidget(self.qa_view)
         self.views.addWidget(self.settings_view)
 
@@ -62,6 +66,10 @@ class MainWindow(QMainWindow):
         self.search_widget.on_input_changed("")
         self.setCentralWidget(self.views)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        # Repaint the result rows when the desktop switches light/dark or accent
+        if style.THEME_MANAGER:
+            style.THEME_MANAGER.changed.connect(self.results_widget.viewport().update)
         self.resize(self.width(), qa_layout.sizeHint().height())
         # Wait to configure the window until other QT configuration has been completed
         self.plat_handler.configure_window()
@@ -325,6 +333,7 @@ class SettingsWidget(QWidget):
 
         """REGION: Buttons"""
         save_btn = QPushButton("Save")
+        save_btn.setObjectName("suggested")
         save_btn.clicked.connect(self.on_save_pressed)
         cancel_btn = QPushButton("Cancel")
         cancel_btn.clicked.connect(self.on_cancel_pressed)

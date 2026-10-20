@@ -14,7 +14,7 @@ from gui import MainWindow
 from gui.elements import DismissableDialog
 from instance import InstanceServer, notify_running
 from rbw import RbwNotFoundException
-from style import DEFAULT_STYLE
+from style import current_theme, install_theme, rgba
 
 
 def main():
@@ -27,11 +27,12 @@ def main():
     app = QApplication(argv)
     app.setApplicationName("rbw-quick-access")
     app.setDesktopFileName("rbw-quick-access")
-    app.setStyleSheet(DEFAULT_STYLE)
 
     # Already running: have that instance show itself instead
     if notify_running():
         return
+
+    install_theme(app)
 
     try:
         window = MainWindow()
@@ -58,25 +59,17 @@ def main():
 
         app.exec()
     except RbwNotFoundException:
+        theme = current_theme()
         dlg = DismissableDialog(
             None,
             "Failed to find rbw!",
-            """
-            <style>
-                code {
-                    background-color: #1a1b26; 
-                    color: #f7768e; 
-                    border-radius: 8px; 
-                    padding: 8px;
-                }
-            </style>
-            
-            <div style="color: #c0caf5; font-size: 20px; text-align: center;">
-                The <code>rbw</code> executable could not be found. Install and add it to your <code>PATH</code>, then restart <code>rbw-quick-access</code>.
+            f"""
+            <div style="font-size: 13pt; text-align: center;">
+                The <code style="background-color: {theme.fg_alpha(0.1)};">rbw</code> executable could not be found.
+                Install it and add it to your <code>PATH</code>, then restart <code>rbw-quick-access</code>.
             </div>
             """,
         )
-        dlg.setStyleSheet(DEFAULT_STYLE)
         dlg.exec()
         app.quit()
 

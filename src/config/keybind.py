@@ -99,7 +99,9 @@ class Keybind(BaseModel):
 
             return "".join(parts)
 
-        return self.serialize()
+        # GNOME writes shortcuts as "Ctrl+Shift+C"
+        parts = self.serialize().split("+")
+        return "+".join([*parts[:-1], parts[-1].capitalize() if len(parts[-1]) > 1 else parts[-1].upper()])
 
     def qt_matches(self, combo: QKeyCombination) -> bool:
         """Determines if a given key combination matches this keybind

@@ -9,7 +9,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtCore import QSize, Qt, QTimer, pyqtBoundSignal, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QFontMetrics, QKeyEvent, QKeySequence
+from PyQt6.QtGui import QFont, QFontMetrics, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
@@ -31,7 +31,8 @@ from PyQt6.QtWidgets import (
 
 import rbw
 from config import Config, Keybind
-from plat import IS_MAC
+import style
+from style import current_theme, keycap_html
 from rbw import BitwardenEntry
 
 if TYPE_CHECKING:
@@ -113,14 +114,24 @@ class SearchBox(QLineEdit):
 
 class SearchResults(QListWidget):
     sel_changed = pyqtSignal(object)
+    VISIBLE_ROWS = 5
 
     def __init__(self, parent: "MainWindow"):
         super().__init__(parent)
         self.setItemDelegate(SearchResultDelegate(self))
         self.horizontalScrollBar().hide()  # type: ignore -- this is always gonna be here, right?
+        self.fit_rows()
+        if style.THEME_MANAGER:
+            style.THEME_MANAGER.changed.connect(self.fit_rows)
         self.__results: list[SearchResult] = []
         self.itemSelectionChanged.connect(self.selection_changed)
         self.sel_changed.connect(parent.on_selection_changed)
+
+    def fit_rows(self) -> None:
+        """Sizes the list to show VISIBLE_ROWS whole rows (none cut off at the bottom)"""
+        row = SearchResultDelegate.row_height(self.font()) + SearchResultDelegate.ROW_MARGIN * 2
+        margins = self.contentsMargins()
+        self.setFixedHeight(row * self.VISIBLE_ROWS + margins.top() + margins.bottom() + self.frameWidth() * 2)
 
     def update_entries(self, results: list[BitwardenEntry]):
         self.clear()
@@ -155,66 +166,58 @@ class SearchResults(QListWidget):
 
 
 class SearchResultDelegate(QStyledItemDelegate):
-    VERTICAL_PADDING = 10
+    """Draws each result as two lines, GNOME-style: the name, then the username and website
+    dimmed. The row background (hover/selection) comes from the stylesheet."""
+
+    VERTICAL_PADDING = 8
+    HORIZONTAL_PADDING = 12
+    LINE_SPACING = 2
+
+    # Matches the QListWidget::item margin in style.py
+    ROW_MARGIN = 1
+
+    @classmethod
+    def row_height(cls, font: QFont) -> int:
+        return QFontMetrics(font).height() * 2 + cls.LINE_SPACING + cls.VERTICAL_PADDING * 2
 
     def sizeHint(self, option, index):
         size = super().sizeHint(option, index)
-
-        return QSize(
-            size.width(),
-            size.height() + self.VERTICAL_PADDING * 2,
-        )
+        return QSize(size.width(), self.row_height(option.font))
 
     def paint(self, painter, option, index):
         if not painter:
             return
 
-        # REGION rebuild standard QListWidgetItem painting
         painter.save()
 
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
-        opt.text = ""  # Unset the text now, so the normal render method doesn't try to render it.
+        opt.text = ""  # Only the row background; the text is drawn below
 
         widget = opt.widget
         style = widget.style() if widget else QApplication.style()
         if not style:
+            painter.restore()
             return
         style.drawControl(QStyle.ControlElement.CE_ItemViewItem, opt, painter, widget)
-        # ENDREGION rebuild standard QListWidgetItem painting
 
-        rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemText, opt, widget)
-        color: QColor
-        # Nasty coloring block since this is kinda... weird. Doesn't take on QSS theme like it should
-        #  And yes, the bitwise and is necessary T_T
-        if opt.state & QStyle.StateFlag.State_Selected:
-            color = QColor("#16161e")
-        else:
-            color = opt.palette.color(opt.palette.ColorRole.Text)
-        painter.setPen(color)
-
+        theme = current_theme()
         item: BitwardenEntry = index.data(Qt.ItemDataRole.UserRole)
+        rect = opt.rect.adjusted(self.HORIZONTAL_PADDING, self.VERTICAL_PADDING, -self.HORIZONTAL_PADDING, -self.VERTICAL_PADDING)
+        line_height = QFontMetrics(opt.font).height()
 
-        bold_font = QFont(opt.font)
-        bold_font.setBold(True)
+        title_font = QFont(opt.font)
+        title_font.setBold(True)
+        painter.setFont(title_font)
+        painter.setPen(theme.window_fg)
+        title_rect = rect.adjusted(0, 0, 0, -(rect.height() - line_height))
+        painter.drawText(title_rect, Qt.AlignmentFlag.AlignVCenter, QFontMetrics(title_font).elidedText(item.name, Qt.TextElideMode.ElideRight, rect.width()))
 
-        painter.setFont(bold_font)
-        painter.drawText(
-            rect,
-            Qt.AlignmentFlag.AlignVCenter,
-            item.name,
-        )
-
-        # Measure where the bold portion ended
-        x = rect.x() + QFontMetrics(bold_font).horizontalAdvance(item.name)
-
-        normal_font = opt.font
-        painter.setFont(normal_font)
-        painter.drawText(
-            rect.adjusted(x - rect.x(), 0, 0, 0),
-            Qt.AlignmentFlag.AlignVCenter,
-            f"  -  {item.user or '—'}  -  {item.uri}",
-        )
+        details = "  ·  ".join(part for part in (item.user, item.uri) if part) or "—"
+        painter.setFont(opt.font)
+        painter.setPen(theme.dim_fg())
+        detail_rect = rect.adjusted(0, line_height + self.LINE_SPACING, 0, 0)
+        painter.drawText(detail_rect, Qt.AlignmentFlag.AlignTop, QFontMetrics(opt.font).elidedText(details, Qt.TextElideMode.ElideRight, rect.width()))
 
         painter.restore()
 
@@ -233,31 +236,29 @@ class HotkeyGuide(QWidget):
         self.config = Config.get()
         layout = QHBoxLayout()
 
-        layout.addWidget(self.__make_guide(self.config.copy_username.display(), "Copy username"))
-        layout.addWidget(self.__make_guide(self.config.copy_password.display(), "Copy password"))
-        layout.addWidget(self.__make_guide(self.config.copy_totp.display(), "Copy totp"))
-
+        self.__guides = [
+            (self.__make_guide(), self.config.copy_username.display(), "Copy username"),
+            (self.__make_guide(), self.config.copy_password.display(), "Copy password"),
+            (self.__make_guide(), self.config.copy_totp.display(), "Copy TOTP"),
+        ]
+        for lbl, _keys, _text in self.__guides:
+            layout.addWidget(lbl)
         self.setLayout(layout)
 
-    def __make_guide(self, keybind: str, text: str) -> QWidget:
-        if IS_MAC:
-            family = "Helvetica"
-        else:
-            family = QFontInfo(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)).family()
+        self.refresh()
+        if style.THEME_MANAGER:
+            style.THEME_MANAGER.changed.connect(self.refresh)
 
+    def refresh(self) -> None:
+        """(Re)draws the keycaps in the current theme's colors"""
+        for lbl, keys, text in self.__guides:
+            lbl.setText(f"{keycap_html(current_theme(), keys)}&nbsp; {text}")
+
+    def __make_guide(self) -> QLabel:
         lbl = QLabel()
+        lbl.setObjectName("dimmed")
         lbl.setTextFormat(Qt.TextFormat.RichText)
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setText(f"""
-            <span style="
-                font-family: {family};
-                background-color: #9aa5ce;
-                color: #16161e;
-            ">
-                {keybind}
-            </span>
-        &nbsp; {text}
-        """)
         return lbl
 
 
