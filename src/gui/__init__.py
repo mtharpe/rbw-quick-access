@@ -8,7 +8,7 @@ import webbrowser
 from datetime import datetime as dt
 from time import sleep
 
-from PyQt6.QtCore import QEvent, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QHideEvent, QKeyEvent, QKeySequence, QWindow
 from PyQt6.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
 
@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.__last_result_id = -1
         self.__selection: BitwardenEntry | None = None
+        self.__results: list[BitwardenEntry] = []
         self.__config = Config.get()
         self.__settings_open = False
         self.__hidden_at = dt.fromtimestamp(0)
@@ -52,6 +53,11 @@ class MainWindow(QMainWindow):
         self.views.addWidget(self.settings_view)
 
         """ENDREGION VIEW CONFIGURATIONS"""
+
+        # The search box and the results list both handle Ctrl+C themselves (copying the typed
+        #  text or the row's label), so entry keys are caught before they get there
+        self.search_widget.installEventFilter(self)
+        self.results_widget.installEventFilter(self)
 
         self.search_widget.on_input_changed("")
         self.setCentralWidget(self.views)
@@ -154,46 +160,57 @@ class MainWindow(QMainWindow):
 
             return False
 
-        def __do_selection_input(sel: BitwardenEntry) -> bool:
-            """Handls selection-specific inputs like opening, copying, etc..
-
-            Args:
-                sel (BitwardenEntry): The validated, non-null bitwarden data entry
-
-            Returns:
-                bool: True if an action was taken (consuming the input), false otherwise
-            """
-
-            if self.__config.open_in_browser.qt_matches(a0.keyCombination()):
-                if sel.uri:
-                    webbrowser.open(sel.uri)
-                self.hide()
-                return True
-
-            if self.__config.copy_username.qt_matches(a0.keyCombination()):
-                if sel.user:
-                    self.copy_to_clipboard(sel.user)
-                self.hide()
-                return True
-
-            if self.__config.copy_password.qt_matches(a0.keyCombination()):
-                self.copy_to_clipboard(rbw.get_field(sel, "password"))
-                self.hide()
-                return True
-
-            if self.__config.copy_totp.qt_matches(a0.keyCombination()):
-                self.copy_to_clipboard(rbw.get_field(sel, "totp"))
-                self.hide()
-                return True
-
-            return False
-
         if __do_app_input():
             return a0.accept()
-        if self.__selection and __do_selection_input(self.__selection):
+        if self.handle_entry_keys(a0):
             return a0.accept()
         # Only call super when we didn't do something special
         super().keyPressEvent(a0)
+
+    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
+        """Runs the entry keys (open, copy username/password/TOTP) before the focused widget
+        sees them"""
+        if a1 and a1.type() == QEvent.Type.KeyPress and isinstance(a1, QKeyEvent) and self.handle_entry_keys(a1):
+            return True
+        return super().eventFilter(a0, a1)
+
+    def handle_entry_keys(self, a0: QKeyEvent) -> bool:
+        """Handles selection-specific inputs like opening, copying, etc.. They act on the
+        highlighted result, or the top result while typing in the search box.
+
+        Args:
+            a0 (QKeyEvent): The keypress event
+
+        Returns:
+            bool: True if an action was taken (consuming the input), false otherwise
+        """
+        sel = self.__selection or (self.__results[0] if self.__results else None)
+        if not sel:
+            return False
+
+        if self.__config.open_in_browser.qt_matches(a0.keyCombination()):
+            if sel.uri:
+                webbrowser.open(sel.uri)
+            self.hide()
+            return True
+
+        if self.__config.copy_username.qt_matches(a0.keyCombination()):
+            if sel.user:
+                self.copy_to_clipboard(sel.user)
+            self.hide()
+            return True
+
+        if self.__config.copy_password.qt_matches(a0.keyCombination()):
+            self.copy_to_clipboard(rbw.get_field(sel, "password"))
+            self.hide()
+            return True
+
+        if self.__config.copy_totp.qt_matches(a0.keyCombination()):
+            self.copy_to_clipboard(rbw.get_field(sel, "totp"))
+            self.hide()
+            return True
+
+        return False
 
     def copy_to_clipboard(self, value: str | None) -> None:
         """Puts a value on the clipboard. Done while the window still has focus, since Wayland
@@ -219,7 +236,11 @@ class MainWindow(QMainWindow):
             return
 
         self.__last_result_id = request_id
-        self.results_widget.update_entries(results or [])
+        self.__results = results or []
+        self.results_widget.update_entries(self.__results)
+        # Highlight the top result while typing: it's what the entry keys act on
+        if self.__results and not self.results_widget.hasFocus():
+            self.results_widget.setCurrentRow(0)
 
     def on_selection_changed(self, selection: BitwardenEntry | None):
         """Delegate used by the emitter in the selection widget to update the current
