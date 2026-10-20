@@ -10,6 +10,7 @@ GNOME's default blue.
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage
 from PyQt6.QtGui import QColor, QFont, QGuiApplication
 
 from plat import IS_LINUX
@@ -201,8 +202,6 @@ class ThemeManager(QObject):
         self.__app = app
         self.__portal = None
         if IS_LINUX:
-            from PyQt6.QtDBus import QDBusConnection, QDBusInterface
-
             bus = QDBusConnection.sessionBus()
             self.__portal = QDBusInterface(PORTAL_SERVICE, PORTAL_PATH, PORTAL_SETTINGS, bus)
             bus.connect(PORTAL_SERVICE, PORTAL_PATH, PORTAL_SETTINGS, "SettingChanged", self.__on_setting_changed)
@@ -248,8 +247,8 @@ class ThemeManager(QObject):
         self.__app.setStyleSheet(build_stylesheet(self.theme))
         self.changed.emit()
 
-    @pyqtSlot("QDBusMessage")
-    def __on_setting_changed(self, message) -> None:
+    @pyqtSlot(QDBusMessage)
+    def __on_setting_changed(self, message: QDBusMessage) -> None:
         namespace, key = message.arguments()[:2]
         if (namespace, key) in {
             ("org.freedesktop.appearance", "color-scheme"),
